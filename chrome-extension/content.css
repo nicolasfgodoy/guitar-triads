@@ -234,6 +234,121 @@
   background-color: rgba(212, 137, 74, 0.15) !important;
 }
 
+/* Tooltip Flutuante no Hover */
+.ot-tooltip {
+  position: absolute;
+  z-index: 10000000 !important;
+  background-color: var(--ot-surface) !important;
+  border: 1px solid var(--ot-border) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6) !important;
+  color: var(--ot-text) !important;
+  width: 170px !important;
+  padding: 10px !important;
+  box-sizing: border-box !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ot-tooltip-header {
+  text-align: center;
+  border-bottom: 1px solid var(--ot-border);
+  padding-bottom: 4px;
+}
+
+.ot-tooltip-header strong {
+  color: var(--ot-accent);
+  font-size: 0.95rem;
+}
+
+.ot-tooltip-subtitle {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--ot-text-muted);
+}
+
+.ot-tooltip-body {
+  display: flex;
+  justify-content: center;
+  background: var(--ot-surface-raised);
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.ot-tooltip-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.ot-tooltip-btn {
+  flex: 1;
+  padding: 4px 0;
+  font-size: 0.72rem;
+  background: var(--ot-surface-raised);
+  border: 1px solid var(--ot-border);
+  border-radius: 4px;
+  color: var(--ot-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-weight: bold;
+}
+
+.ot-tooltip-btn:hover {
+  border-color: var(--ot-accent);
+  color: var(--ot-accent);
+}
+
+.ot-btn-variar {
+  background-color: var(--ot-accent);
+  color: var(--ot-bg);
+  border-color: var(--ot-accent);
+}
+
+.ot-btn-variar:hover {
+  background-color: var(--ot-accent-hover);
+  color: var(--ot-bg) !important;
+}
+
+/* Modificações de Cabeçalho Superior no Cifra Club */
+.ot-header-fretboard {
+  background: var(--ot-surface-raised) !important;
+  border: 1px solid var(--ot-border) !important;
+  border-radius: 6px !important;
+  padding: 6px !important;
+  display: inline-flex !important;
+  justify-content: center !important;
+  transition: border-color 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.ot-header-fretboard:hover {
+  border-color: var(--ot-accent) !important;
+}
+
+.ot-header-var-btn {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 4px 6px;
+  font-size: 0.75rem;
+  background-color: var(--ot-surface);
+  border: 1px solid var(--ot-border);
+  border-radius: 4px;
+  color: var(--ot-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-weight: bold;
+}
+
+.ot-header-var-btn:hover {
+  border-color: var(--ot-accent);
+  color: var(--ot-accent);
+  background-color: var(--ot-surface-raised);
+}
+
 /* Ajusta margens e paddings no Cifra Club se a sidebar estiver aberta */
 body {
   padding-left: 360px !important;

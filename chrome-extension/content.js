@@ -566,6 +566,9 @@ function renderSidebarTriads() {
 }
 
 // ─── Hover Tooltips Interativos diretamente nas Cifras ─────────────────────────
+let activeTooltip = null;
+let tooltipTimeout = null;
+
 function initHoverTooltips() {
   const targets = document.querySelectorAll('pre b, span.cifra-chord-link, .cifra_container b');
   
@@ -576,28 +579,175 @@ function initHoverTooltips() {
       target.style.position = 'relative';
       target.classList.add('ot-highlighted-chord');
       
-      // Ao clicar na cifra original do site, mostra/foca a sidebar da extensão
+      // Evento de mouseenter para criar e posicionar o tooltip
+      target.addEventListener('mouseenter', (e) => {
+        clearTimeout(tooltipTimeout);
+        showTooltip(target, text);
+      });
+
+      // Evento de mouseleave para destruir o tooltip com atraso
+      target.addEventListener('mouseleave', () => {
+        tooltipTimeout = setTimeout(destroyTooltip, 300);
+      });
+      
+      // Ao clicar, foca e abre a sidebar da extensão
       target.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        
-        // Abre sidebar se escondida
-        const sidebar = document.getElementById('ot-triads-sidebar');
-        if (sidebar) {
-          sidebar.classList.remove('ot-hidden');
-        }
-
-        // Foca o acorde correspondente na lista
-        const chips = document.querySelectorAll('.ot-chord-chip');
-        for (const chip of chips) {
-          if (chip.textContent.trim() === text) {
-            chip.click();
-            chip.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            break;
-          }
-        }
+        openAndFocusSidebar(text);
       });
     }
+  });
+}
+
+function openAndFocusSidebar(chordName) {
+  // Abre sidebar se escondida
+  const sidebar = document.getElementById('ot-triads-sidebar');
+  if (sidebar) {
+    sidebar.classList.remove('ot-hidden');
+  }
+
+  // Foca o acorde correspondente na lista
+  const chips = document.querySelectorAll('.ot-chord-chip');
+  for (const chip of chips) {
+    if (chip.textContent.trim() === chordName) {
+      chip.click();
+      chip.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      break;
+    }
+  }
+}
+
+function showTooltip(target, chordName) {
+  destroyTooltip();
+
+  const parsed = parseCifraChord(chordName);
+  if (!parsed) return;
+
+  const positions = findVoicingPositions(parsed);
+  if (positions.length === 0) return;
+
+  const firstPos = positions[0];
+
+  // Cria elemento do tooltip
+  const tooltip = document.createElement('div');
+  tooltip.className = 'ot-tooltip';
+  tooltip.id = 'ot-chord-tooltip';
+
+  const strNames = firstPos.strings.map(s => STRING_LABELS[s]).join('-');
+  
+  tooltip.innerHTML = `
+    <div class="ot-tooltip-header">
+      <strong>${chordName}</strong>
+      <span class="ot-tooltip-subtitle">Tríade · ${firstPos.inversionName}</span>
+    </div>
+    <div class="ot-tooltip-body">
+      ${renderFretboardSVG(firstPos)}
+    </div>
+    <div class="ot-tooltip-footer">
+      <button class="ot-tooltip-btn ot-btn-listen">🔊 Ouvir</button>
+      <button class="ot-tooltip-btn ot-btn-variar">🔍 Variar</button>
+    </div>
+  `;
+
+  document.body.appendChild(tooltip);
+  activeTooltip = tooltip;
+
+  // Previne fechar tooltip quando o mouse está sobre ele
+  tooltip.addEventListener('mouseenter', () => {
+    clearTimeout(tooltipTimeout);
+  });
+  tooltip.addEventListener('mouseleave', () => {
+    tooltipTimeout = setTimeout(destroyTooltip, 300);
+  });
+
+  // Ações dentro do tooltip
+  tooltip.querySelector('.ot-btn-listen').addEventListener('click', (e) => {
+    e.stopPropagation();
+    playChordVoicing(firstPos.notes);
+  });
+
+  tooltip.querySelector('.ot-btn-variar').addEventListener('click', (e) => {
+    e.stopPropagation();
+    destroyTooltip();
+    openAndFocusSidebar(chordName);
+  });
+
+  // Calcula posicionamento dinâmico
+  const rect = target.getBoundingClientRect();
+  const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+  tooltip.style.left = `${rect.left + scrollLeft + (rect.width / 2) - 85}px`; // centraliza horizontalmente
+  tooltip.style.top = `${rect.top + scrollTop - tooltip.offsetHeight - 10}px`; // posiciona logo acima
+}
+
+function destroyTooltip() {
+  if (activeTooltip) {
+    activeTooltip.remove();
+    activeTooltip = null;
+  }
+}
+
+// ─── Substituir Acordes Superiores do Cifra Club ──────────────────────────────────
+function replaceCifraClubHeaderChords() {
+  // O Cifra Club exibe a lista de acordes superiores no elemento '#chords-list' ou '.cifra-chords-list'
+  const chordsContainer = document.querySelector('#chords-list, .cifra-chords-list, .cifra-instrument-guitar');
+  if (!chordsContainer) return;
+
+  // Cada acorde do cabeçalho normalmente é englobado em uma classe '.js-modal-trigger' ou tags que contêm o nome do acorde
+  const chordElements = chordsContainer.querySelectorAll('li, .chord, .js-modal-trigger');
+  
+  chordElements.forEach(el => {
+    // Procura o nome do acorde no cabeçalho
+    const chordNameEl = el.querySelector('strong, span, .chord-name');
+    if (!chordNameEl) return;
+
+    const chordName = chordNameEl.textContent.trim();
+    if (!chordName || chordName.length > 10 || !/^[A-G]/.test(chordName)) return;
+
+    const parsed = parseCifraChord(chordName);
+    if (!parsed) return;
+
+    const positions = findVoicingPositions(parsed);
+    if (positions.length === 0) return;
+
+    // Pega o primeiro shape de tríade
+    const firstPos = positions[0];
+
+    // Procura e remove o SVG/Imagem de acorde original do Cifra Club
+    const originalFretboard = el.querySelector('svg, img, canvas, .guitar-neck');
+    if (originalFretboard) {
+      originalFretboard.remove();
+    }
+
+    // Cria a área do nosso novo fretboard de tríade
+    const newFretboardContainer = document.createElement('div');
+    newFretboardContainer.className = 'ot-header-fretboard';
+    newFretboardContainer.innerHTML = renderFretboardSVG(firstPos);
+    
+    // Adiciona efeito de som ao clicar no shape superior
+    newFretboardContainer.addEventListener('click', (e) => {
+      e.stopPropagation();
+      playChordVoicing(firstPos.notes);
+    });
+
+    newFretboardContainer.style.cursor = 'pointer';
+    newFretboardContainer.style.marginTop = '8px';
+    newFretboardContainer.title = "Clique para ouvir a tríade";
+
+    el.appendChild(newFretboardContainer);
+
+    // Adiciona um pequeno botão de "Variar" sob cada acorde superior
+    const varBtn = document.createElement('button');
+    varBtn.className = 'ot-header-var-btn';
+    varBtn.textContent = 'Variar';
+    varBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openAndFocusSidebar(chordName);
+    });
+
+    el.appendChild(varBtn);
   });
 }
 
@@ -622,6 +772,9 @@ function initializeExtension() {
   scanPageChords();
   createExtensionSidebar();
   initHoverTooltips();
+  
+  // Executa após um pequeno delay para garantir que o Cifra Club carregou os acordes superiores
+  setTimeout(replaceCifraClubHeaderChords, 500);
 }
 
 function applyLayout() {
