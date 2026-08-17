@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estudo de Tríades na Guitarra</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f0d0b;
+      --surface: #1c1812;
+      --surface-raised: #252019;
+      --border: #3a322a;
+      --text: #e8e2da;
+      --text-muted: #8a8078;
+      --accent: #d4894a;
+      --accent-hover: #e89a5a;
+      --root-note: #c94a3a;
+      --third-note: #4a8a9a;
+      --fifth-note: #6a7a5a;
+      --seventh-note: #9a6a9a;
+      --ninth-note: #4a7aaa;
+      --sus-note: #8a8a4a;
+      --modal-color: #7a5a9a;
+      --string-line: #4a443a;
+      --cifra-chord-color: #e89a5a;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.5; }
+    .app-container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+    header { margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+    h1 { font-family: 'IBM Plex Mono', monospace; font-size: 1.75rem; font-weight: 600; letter-spacing: -0.02em; }
+    h1 span { color: var(--accent); }
+    .mode-toggle-btn { font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.6rem 1.2rem; border: 1px solid var(--accent); background: transparent; color: var(--accent); border-radius: 6px; cursor: pointer; transition: all 0.2s ease; }
+    .mode-toggle-btn:hover { background: var(--accent); color: var(--bg); }
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+    .controls-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1rem; background: var(--surface); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border); }
+    .control-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .control-group label { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+    select, button, input, textarea { font-family: 'IBM Plex Sans', sans-serif; font-size: 0.9rem; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 6px; color: var(--text); transition: border-color 0.15s ease; }
+    select, input, textarea { padding: 0.75rem 1rem; }
+    button { padding: 0.75rem 1rem; cursor: pointer; }
+    textarea { font-family: 'IBM Plex Mono', monospace; resize: vertical; min-height: 180px; }
+    select:hover, button:hover, input:hover, textarea:hover { border-color: var(--accent); }
+    select:focus, button:focus, input:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(212,137,74,0.2); }
+    button.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .chord-section { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 0.75rem; }
+    .chord-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .chord-btn { min-width: 60px; font-family: 'IBM Plex Mono', monospace; font-weight: 500; padding: 0.5rem 0.75rem; }
+    .chord-btn.selected { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+    .chord-btn.modal-btn { border-color: var(--modal-color); color: #c8a8e8; }
+    .chord-btn.modal-btn:hover { background: rgba(122,90,154,0.15); }
+    .chord-btn.modal-btn.selected { background: var(--modal-color); color: #fff; border-color: var(--modal-color); }
+
+    /* Extension selector */
+    .ext-panel { grid-column: 1/-1; display: flex; flex-direction: column; gap: 0.75rem; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.25rem; }
+    .ext-group-label { font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 0.25rem; }
+    .ext-row { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.5rem; }
+    .ext-btn { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; padding: 0.3rem 0.65rem; min-width: 0; border-radius: 5px; }
+    .ext-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+    /* Voicing selector */
+    .voicing-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .voicing-btn { font-family: 'IBM Plex Mono', monospace; font-size: 0.78rem; padding: 0.3rem 0.65rem; border-radius: 5px; }
+    .voicing-btn.active { background: #4a7aaa; color: #fff; border-color: #4a7aaa; }
+
+    .collapsible-header { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; padding: 0.4rem 0; }
+    .collapsible-header .toggle-arrow { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; color: var(--text-muted); transition: transform 0.2s ease; display: inline-block; }
+    .collapsible-header .toggle-arrow.open { transform: rotate(90deg); }
+    .collapsible-header span { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+    .collapsible-body { overflow: hidden; max-height: 0; transition: max-height 0.25s ease; }
+    .collapsible-body.open { max-height: 200px; }
+    .modal-tag { font-size: 0.7rem; font-family: 'IBM Plex Mono', monospace; color: var(--modal-color); opacity: 0.8; margin-top: 0.25rem; }
+
+    .search-section { margin-bottom: 1.5rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem 1.5rem; }
+    .search-section label { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 0.5rem; }
+    .search-wrapper { position: relative; max-width: 400px; }
+    .search-input { width: 100%; padding: 0.75rem 2.5rem 0.75rem 1rem; font-family: 'IBM Plex Mono', monospace; font-size: 1rem; }
+    .search-clear { position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; padding: 0; line-height: 1; display: none; }
+    .search-clear:hover { color: var(--text); border: none; }
+    .autocomplete-list { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 6px; z-index: 100; max-height: 260px; overflow-y: auto; display: none; }
+    .autocomplete-list.visible { display: block; }
+    .autocomplete-item { padding: 0.6rem 1rem; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .autocomplete-item:last-child { border-bottom: none; }
+    .autocomplete-item:hover, .autocomplete-item.highlighted { background: rgba(212,137,74,0.1); color: var(--accent); }
+    .autocomplete-item .tag { font-size: 0.7rem; color: var(--text-muted); }
+    .search-hint { margin-top: 0.5rem; font-size: 0.8rem; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; }
+
+    .string-group-selector { display: flex; gap: 0.5rem; }
+    .string-group-btn { flex: 1; font-size: 0.8rem; padding: 0.5rem; }
+    .region-selector { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .region-btn { font-size: 0.8rem; padding: 0.5rem 0.75rem; }
+
+    .legend { display: flex; gap: 1rem; padding: 1rem; background: var(--surface); border-radius: 6px; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
+    .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; }
+    .legend-dot { width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0; }
+    .legend-dot.root { background: var(--root-note); }
+    .legend-dot.third { background: var(--third-note); }
+    .legend-dot.fifth { background: var(--fifth-note); }
+    .legend-dot.seventh { background: var(--seventh-note); }
+    .legend-dot.ninth { background: var(--ninth-note); }
+    .legend-dot.sus { background: var(--sus-note); }
+    .legend-ext { display: none; }
+    .legend-ext.visible { display: flex; }
+
+    .results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+    .results-header h2 { font-family: 'IBM Plex Mono', monospace; font-size: 1rem; color: var(--text-muted); }
+    .results-source { font-size: 0.8rem; font-family: 'IBM Plex Mono', monospace; padding: 0.25rem 0.6rem; border-radius: 4px; border: 1px solid var(--modal-color); color: #c8a8e8; display: inline-block; }
+
+    .triads-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
+    .triad-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: border-color 0.15s ease; }
+    .triad-card:hover { border-color: var(--accent); }
+    .triad-header { padding: 0.75rem 1rem; background: var(--surface-raised); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .triad-title { font-family: 'IBM Plex Mono', monospace; font-size: 0.95rem; font-weight: 600; margin-bottom: 0.2rem; }
+    .triad-subtitle { font-size: 0.78rem; color: var(--text-muted); }
+    .fretboard-container { padding: 1rem; display: flex; justify-content: center; }
+
+    .empty-state { text-align: center; padding: 4rem 2rem; color: var(--text-muted); grid-column: 1/-1; }
+    .empty-state p { font-size: 1rem; margin-bottom: 0.5rem; }
+    .empty-state small { font-size: 0.85rem; }
+
+    /* Cifra */
+    .cifra-container { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1.5rem; }
+    @media (max-width: 900px) { .cifra-container { grid-template-columns: 1fr; } }
+    .cifra-input-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
+    .cifra-output-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
+    .cifra-viewer { font-family: 'IBM Plex Mono', monospace; font-size: 0.9rem; white-space: pre; overflow-x: auto; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 6px; padding: 1.25rem; color: var(--text); line-height: 1.7; max-height: 360px; overflow-y: auto; }
+    .cifra-chord-link { color: var(--cifra-chord-color); font-weight: 600; cursor: pointer; padding: 0 2px; border-radius: 3px; transition: background 0.15s ease; }
+    .cifra-chord-link:hover { background: rgba(232,154,90,0.2); }
+    .cifra-chord-link.active { background: var(--accent); color: var(--bg); }
+    .cifra-detected-chords { display: flex; flex-direction: column; gap: 0.5rem; }
+    .cifra-detected-chords label { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); }
+    .process-btn { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+    .process-btn:hover { background: var(--accent-hover); }
+
+    /* Audio styles */
+    .play-voicing-btn { padding: 0.35rem 0.6rem; font-size: 0.75rem; background: var(--surface-raised); border: 1px solid var(--border); border-radius: 4px; display: flex; align-items: center; gap: 0.25rem; color: var(--text); transition: all 0.15s ease; cursor: pointer; }
+    .play-voicing-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    @media (max-width: 768px) {
+      .app-container { padding: 1rem; }
+      .controls-panel { padding: 1rem; gap: 1rem; }
+      .triads-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-container">
+  <header>
+    <h1>Estudo de <span>Tríades</span> na Guitarra</h1>
+    <button class="mode-toggle-btn" id="mode-toggle">📄 Modo Cifra</button>
+  </header>
+
+  <!-- MODO ESTUDO -->
+  <div id="estudo-view" class="view-section active">
+    <div class="controls-panel">
+      <div class="control-group">
+        <label>Tônica</label>
+        <select id="tonic-select">
+          <option value="C">C</option><option value="C#">C# / Db</option><option value="D">D</option>
+          <option value="D#">D# / Eb</option><option value="E">E</option><option value="F">F</option>
+          <option value="F#">F# / Gb</option><option value="G">G</option><option value="G#">G# / Ab</option>
+          <option value="A">A</option><option value="A#">A# / Bb</option><option value="B">B</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Escala</label>
+        <select id="scale-select">
+          <option value="major">Maior Natural</option>
+          <option value="minor">Menor Natural</option>
+        </select>
+      </div>
+
+      <div class="control-group chord-section" style="grid-column: 1 / -1;">
+        <label>Campo Harmônico Diatônico (Clique para selecionar e tocar)</label>
+        <div class="chord-buttons" id="chord-buttons"></div>
+        <div class="collapsible-header" id="modal-toggle">
+          <span class="toggle-arrow" id="modal-arrow">▶</span>
+          <span>Variações e Empréstimos Modais</span>
+        </div>
+        <div class="collapsible-body" id="modal-body">
+          <div class="chord-buttons" id="modal-buttons"></div>
+          <div class="modal-tag" id="modal-tag"></div>
+        </div>
+      </div>
+
+      <!-- Extension panel -->
+      <div class="ext-panel" style="grid-column: 1 / -1;">
+        <div style="display:flex;gap:2rem;flex-wrap:wrap;">
+          <div>
+            <div class="ext-group-label">Extensão / Variação</div>
+            <div class="ext-row" id="ext-buttons">
+              <button class="ext-btn active" data-ext="triad">Tríade</button>
+              <button class="ext-btn" data-ext="maj7">Maj7</button>
+              <button class="ext-btn" data-ext="7">7 (dom)</button>
+              <button class="ext-btn" data-ext="m7">m7</button>
+              <button class="ext-btn" data-ext="m7b5">m7(b5)</button>
+              <button class="ext-btn" data-ext="dim7">dim7</button>
+              <button class="ext-btn" data-ext="sus2">Sus2</button>
+              <button class="ext-btn" data-ext="sus4">Sus4</button>
+              <button class="ext-btn" data-ext="7sus4">7sus4</button>
+              <button class="ext-btn" data-ext="add9">add9/9</button>
+              <button class="ext-btn" data-ext="m9">m9</button>
+              <button class="ext-btn" data-ext="7b9">7(b9)</button>
+              <button class="ext-btn" data-ext="7s9">7(#9)</button>
+              <button class="ext-btn" data-ext="6">6</button>
+              <button class="ext-btn" data-ext="m6">m6</button>
+            </div>
+          </div>
+          <div id="voicing-panel" style="display:none;">
+            <div class="ext-group-label">Voicing (3 cordas)</div>
+            <div class="voicing-row" id="voicing-buttons">
+              <button class="voicing-btn active" data-voicing="R35">R-3-5</button>
+              <button class="voicing-btn" data-voicing="R37">R-3-7</button>
+              <button class="voicing-btn" data-voicing="R57">R-5-7</button>
+              <button class="voicing-btn" data-voicing="357">3-5-7</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Conjunto de Cordas</label>
+        <div class="string-group-container string-group-selector-estudo"></div>
+      </div>
+      <div class="control-group">
+        <label>Região do Braço</label>
+        <div class="region-container region-selector-estudo"></div>
+      </div>
+    </div>
+
+    <div class="search-section">
+      <label for="chord-search">Busca Rápida de Acorde</label>
+      <div class="search-wrapper">
+        <input type="text" id="chord-search" class="search-input" placeholder="Ex: Bbmaj7, F#m7, G7, Csus4, Am9…" autocomplete="off" spellcheck="false">
+        <button class="search-clear" id="search-clear" title="Limpar">✕</button>
+        <div class="autocomplete-list" id="autocomplete-list"></div>
+      </div>
+      <div class="search-hint" id="search-hint">Suporta extensões: Cmaj7, Am7, G7, Dsus4, Fadd9…</div>
+    </div>
+  </div>
+
+  <!-- MODO CIFRA -->
+  <div id="cifra-view" class="view-section">
+    <div class="cifra-container">
+      <div class="cifra-input-panel">
+        <div id="cifra-song-info" style="display:none;background:var(--surface-raised);border:1px solid var(--border);border-radius:6px;padding:0.75rem 1rem;margin-bottom:0.25rem;">
+          <div id="cifra-song-title" style="font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:1rem;color:var(--text);"></div>
+          <div id="cifra-song-artist" style="font-size:0.82rem;color:var(--text-muted);margin-top:0.1rem;"></div>
+          <div id="cifra-song-key" style="font-size:0.78rem;color:var(--accent);font-family:'IBM Plex Mono',monospace;margin-top:0.25rem;"></div>
+        </div>
+
+        <div class="control-group">
+          <label for="cifra-url-input">Link da cifra (Cifra Club, etc.)</label>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <input type="url" id="cifra-url-input" style="flex:1;min-width:180px;" placeholder="https://www.cifraclub.com.br/artista/musica/">
+            <button class="process-btn" id="cifra-url-btn" style="white-space:nowrap;flex-shrink:0;">📥 Carregar</button>
+          </div>
+          <div id="cifra-loader" style="display:none;font-size:0.8rem;color:var(--accent);font-family:'IBM Plex Mono',monospace;margin-top:0.25rem;">⟳ Carregando cifra…</div>
+          <div id="cifra-error" style="display:none;font-size:0.8rem;color:var(--root-note);font-family:'IBM Plex Mono',monospace;margin-top:0.25rem;"></div>
+        </div>
+
+        <div class="collapsible-header" id="cifra-manual-toggle" style="padding:0.35rem 0;">
+          <span class="toggle-arrow" id="cifra-manual-arrow">▶</span>
+          <span>Ou colar texto manualmente</span>
+        </div>
+        <div class="collapsible-body" id="cifra-manual-body">
+          <div class="control-group" style="margin-top:0.5rem;gap:0.5rem;">
+            <textarea id="cifra-textarea" placeholder="Cole aqui a cifra com acordes e letra...&#10;&#10;Tom: G&#10;&#10;G        Em       C        D&#10;Tudo que a gente sonhou&#10;Am7      D7       G&#10;Agora se realizou"></textarea>
+            <button class="process-btn" id="cifra-process-btn">Processar Texto</button>
+          </div>
+        </div>
+
+        <div class="cifra-detected-chords">
+          <label>Acordes Identificados (Dê duplo clique para ouvir)</label>
+          <div class="chord-buttons" id="cifra-detected-buttons">
+            <div style="font-size:0.85rem;color:var(--text-muted)">Nenhum acorde processado ainda</div>
+          </div>
+        </div>
+      </div>
+      <div class="cifra-output-panel">
+        <div class="control-group">
+          <label>Cifra Interativa (Clique nos acordes)</label>
+          <div class="cifra-viewer" id="cifra-output-viewer">Cole uma cifra ao lado e clique em Processar.</div>
+        </div>
+        <div class="controls-panel" style="grid-template-columns:1fr 1fr;margin-bottom:0;padding:1rem;">
+          <div class="control-group">
+            <label>Conjunto de Cordas</label>
+            <div class="string-group-container string-group-selector-cifra"></div>
+          </div>
+          <div class="control-group">
+            <label>Região do Braço</label>
+            <div class="region-container region-selector-cifra"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS (shared) -->
+  <div class="results-container" style="margin-top:1.5rem;">
+    
+    <!-- SEÇÃO DE VOICINGS SELECIONADOS (ROTEIRO) -->
+    <div class="selected-voicings-section" id="selected-voicings-section" style="display:none; margin-bottom: 2rem; background: var(--surface); border: 1px dashed var(--accent); border-radius: 8px; padding: 1.5rem;">
+      <h3 style="font-family:'IBM Plex Mono',monospace; font-size:1rem; color:var(--accent); margin-bottom:1rem; display:flex; justify-content:space-between; align-items:center;">
+        <span>📋 Voicings Selecionados para a Música</span>
+        <button onclick="clearSelectedVoicings()" style="padding:0.25rem 0.5rem; font-size:0.75rem; background:var(--surface-raised); border:1px solid var(--border); border-radius:4px; color:var(--text-muted); cursor:pointer;">Limpar Todos</button>
+      </h3>
+      <div class="triads-grid" id="selected-voicings-grid"></div>
+    </div>
+
+    <div class="legend" id="legend">
+      <div class="legend-item"><div class="legend-dot root"></div><span>R — Fundamental</span></div>
+      <div class="legend-item"><div class="legend-dot third"></div><span>3 / b3 — Terça</span></div>
+      <div class="legend-item"><div class="legend-dot fifth"></div><span>5 / b5 — Quinta</span></div>
+      <div class="legend-item legend-ext" id="leg-7"><div class="legend-dot seventh"></div><span id="leg-7-label">7 — Sétima</span></div>
+      <div class="legend-item legend-ext" id="leg-9"><div class="legend-dot ninth"></div><span id="leg-9-label">9 — Nona</span></div>
+      <div class="legend-item legend-ext" id="leg-sus"><div class="legend-dot sus"></div><span id="leg-sus-label">Sus</span></div>
+    </div>
+    <div class="results-header">
+      <h2 id="results-title">Selecione um acorde para ver os voicings</h2>
+      <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:0.35rem;">
+          <label for="play-mode-select" style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Modo de Som:</label>
+          <select id="play-mode-select" style="padding:0.3rem 0.5rem;font-size:0.78rem;background:var(--surface-raised);border:1px solid var(--border);border-radius:4px;cursor:pointer;">
+            <option value="strum">Dedilhado (Arpejo)</option>
+            <option value="chord">Simultâneo (Acorde)</option>
+          </select>
+        </div>
+        <span class="results-source" id="results-source" style="display:none;"></span>
+      </div>
+    </div>
+    <div class="triads-grid" id="triads-grid">
+      <div class="empty-state"><p>Selecione um acorde ou faça uma busca rápida</p><small>Os diagramas aparecerão aqui</small></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Constants ────────────────────────────────────────────────────────────────
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const FLAT_NAMES = ['C','Db','D','Eb','E','F','Gb','G','Ab','A','Bb','B'];
+const STRING_TUNING = [4, 9, 2, 7, 11, 4]; // Corda 6→1: E A D G B E
+const STRING_MIDI_BASE = [40, 45, 50, 55, 59, 64]; // Midi values for open strings 6->1
+const STRING_LABELS = { 0:'E', 1:'A', 2:'D', 3:'G', 4:'B', 5:'e' };
+
+const SCALE_INTERVALS = { major: [0,2,4,5,7,9,11], minor: [0,2,3,5,7,8,10] };
+const DIATONIC_SYMBOLS = { major: ['','m','m','','','m','dim'], minor: ['m','dim','','m','m','',''] };
+const DIATONIC_DEGREES = { major: ['I','ii','iii','IV','V','vi','vii°'], minor: ['i','ii°','III','iv','v','VI','VII'] };
+const FLAT_TO_SHARP = { 'Db':'C#','Eb':'D#','Gb':'F#','Ab':'G#','Bb':'A#' };
+
+// Extension definitions: each has intervals [R, X, Y] and metadata
+const EXT_DEFS = {
+  triad:  { label:'Tríade',         notes: (r,q) => triadeNotes(r,q),        useExt: false },
+  maj7:   { label:'Maj7',           notes: (r,q) => maj7Notes(r,q),           useExt: true, extLabel:'7M', extColor:'#9a6a9a' },
+  '7':    { label:'7 (dominante)',  notes: (r,q) => dom7Notes(r,q),           useExt: true, extLabel:'b7', extColor:'#9a6a9a' },
+  m7:     { label:'m7',             notes: (r,q) => m7Notes(r,q),             useExt: true, extLabel:'b7', extColor:'#9a6a9a' },
+  m7b5:   { label:'m7(b5)',         notes: (r,q) => m7b5Notes(r,q),           useExt: true, extLabel:'b7', extColor:'#9a6a9a' },
+  dim7:   { label:'dim7',           notes: (r,q) => dim7Notes(r,q),           useExt: true, extLabel:'bb7', extColor:'#9a6a9a' },
+  sus2:   { label:'Sus2',           notes: (r,q) => sus2Notes(r,q),           useExt: false, susLabel:'2' },
+  sus4:   { label:'Sus4',           notes: (r,q) => sus4Notes(r,q),           useExt: false, susLabel:'4' },
+  '7sus4':{ label:'7sus4',          notes: (r,q) => domSus4Notes(r,q),        useExt: true,  extLabel:'b7', extColor:'#9a6a9a', susLabel:'4' },
+  add9:   { label:'add9 / 9',       notes: (r,q) => add9Notes(r,q),           useExt: true, nineLabel:'9', extColor:'#4a7aaa' },
+  m9:     { label:'m9',             notes: (r,q) => m9Notes(r,q),             useExt: true, nineLabel:'9', extColor:'#4a7aaa', extLabel:'b7' },
+  '7b9':  { label:'7(b9)',          notes: (r,q) => dom7b9Notes(r,q),         useExt: true, extLabel:'b7', extColor:'#9a6a9a', nineLabel:'b9', nineColor:'#4a7aaa' },
+  '7s9':  { label:'7(#9)',          notes: (r,q) => dom7s9Notes(r,q),         useExt: true, extLabel:'b7', extColor:'#9a6a9a', nineLabel:'#9', nineColor:'#4a7aaa' },
+  '6':    { label:'6',              notes: (r,q) => sixNotes(r,q),            useExt: true, sixLabel:'6', extColor:'#8a8a4a' },
+  m6:     { label:'m6',             notes: (r,q) => m6Notes(r,q),             useExt: true, sixLabel:'6', extColor:'#8a8a4a' },
+};
+
+// ─── Note pool builders ───────────────────────────────────────────────────────
+function n(sem, func, useFlat=false) { return { sem: ((sem%12)+12)%12, func, useFlat }; }
+
+function triadeNotes(root, quality) {
+  if (quality==='m')   return [n(root,'R'), n(root+3,'b3',true), n(root+7,'5')];
+  if (quality==='dim') return [n(root,'R'), n(root+3,'b3',true), n(root+6,'b5',true)];
+  return [n(root,'R'), n(root+4,'3'), n(root+7,'5')];
+}
+function maj7Notes(root, quality) {
+  const base = triadeNotes(root, quality);
+  base.push(n(root+11,'7M'));
+  return base;
+}
+function dom7Notes(root, quality) {
+  const base = triadeNotes(root, quality);
+  base.push(n(root+10,'b7',true));
+  return base;
+}
+function m7Notes(root, quality) {
+  return [n(root,'R'), n(root+3,'b3',true), n(root+7,'5'), n(root+10,'b7',true)];
+}
+function m7b5Notes(root, quality) {
+  return [n(root,'R'), n(root+3,'b3',true), n(root+6,'b5',true), n(root+10,'b7',true)];
+}
+function dim7Notes(root, quality) {
+  return [n(root,'R'), n(root+3,'b3',true), n(root+6,'b5',true), n(root+9,'bb7',true)];
+}
+function sus2Notes(root, quality) {
+  return [n(root,'R'), n(root+2,'2'), n(root+7,'5')];
+}
+function sus4Notes(root, quality) {
+  return [n(root,'R'), n(root+5,'4'), n(root+7,'5')];
+}
+function domSus4Notes(root, quality) {
+  return [n(root,'R'), n(root+5,'4'), n(root+7,'5'), n(root+10,'b7',true)];
+}
+function add9Notes(root, quality) {
+  const base = triadeNotes(root, quality);
+  base.push(n(root+2,'9'));
+  return base;
+}
+function m9Notes(root, quality) {
+  return [n(root,'R'), n(root+3,'b3',true), n(root+7,'5'), n(root+10,'b7',true), n(root+2,'9')];
+}
+function dom7b9Notes(root, quality) {
+  return [n(root,'R'), n(root+4,'3'), n(root+7,'5'), n(root+10,'b7',true), n(root+1,'b9',true)];
+}
+function dom7s9Notes(root, quality) {
+  return [n(root,'R'), n(root+4,'3'), n(root+7,'5'), n(root+10,'b7',true), n(root+3,'#9')];
+}
+function sixNotes(root, quality) {
+  const base = triadeNotes(root, quality);
+  base.push(n(root+9,'6'));
+  return base;
+}
+function m6Notes(root, quality) {
+  return [n(root,'R'), n(root+3,'b3',true), n(root+7,'5'), n(root+9,'6')];
+}
+
+// ─── Note color map ───────────────────────────────────────────────────────────
+function noteColor(func) {
+  if (func==='R') return '#c94a3a';
+  if (func==='3'||func==='b3') return '#4a8a9a';
+  if (func==='5'||func==='b5') return '#6a7a5a';
+  if (func==='7M'||func==='b7'||func==='bb7') return '#9a6a9a';
+  if (func==='9'||func==='b9'||func==='#9') return '#4a7aaa';
+  if (func==='2'||func==='4'||func==='6') return '#8a8a4a';
+  return '#8a8078';
+}
+
+// ─── Voicing selector ─────────────────────────────────────────────────────────
+const VOICING_DEFS = {
+  R35:  { label:'R-3-5',  pick: pool => pickByFuncs(pool, ['R','3','b3','5','b5']) },
+  R37:  { label:'R-3-7',  pick: pool => pickByFuncs(pool, ['R','3','b3','7M','b7','bb7']) },
+  R57:  { label:'R-5-7',  pick: pool => pickByFuncs(pool, ['R','5','b5','7M','b7','bb7']) },
+  '357':{ label:'3-5-7',  pick: pool => pickByFuncs(pool, ['3','b3','5','b5','7M','b7','bb7']) },
+};
+
+function pickByFuncs(pool, funcs) {
+  const out = [];
+  for (const f of funcs) {
+    const match = pool.find(p => p.func === f);
+    if (match && !out.find(o => o.func === match.func)) out.push(match);
+    if (out.length === 3) break;
+  }
+  return out.length === 3 ? out : null;
+}
+
+// ─── AUDIO ENGINE (Web Audio API Guitar Synthesizer) ───────────────────────────
+let audioCtx = null;
+
+function getAudioContext() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+function playGuitarSynthNote(midiNote, delay = 0, duration = 1.3) {
+  const ctx = getAudioContext();
+  const now = ctx.currentTime + delay;
+  const freq = 440 * Math.pow(2, (midiNote - 69) / 12);
+
+  // Nodes
+  const osc1 = ctx.createOscillator();
+  const osc2 = ctx.createOscillator();
+  const gainNode = ctx.createGain();
+  const filterNode = ctx.createBiquadFilter();
+
+  // Route
+  osc1.connect(filterNode);
+  osc2.connect(filterNode);
+  filterNode.connect(gainNode);
+  gainNode.connect(ctx.destination);
+
+  // Waveforms (triangle for resonance/body, sawtooth for string buzz)
+  osc1.type = 'triangle';
+  osc2.type = 'sawtooth';
+
+  osc1.frequency.value = freq;
+  // Detune slightly for chorus/realism
+  osc2.frequency.value = freq + 0.8;
+
+  // Modulate volume balance between oscs
+  const gainOsc1 = ctx.createGain();
+  const gainOsc2 = ctx.createGain();
+  gainOsc1.gain.value = 0.8;
+  gainOsc2.gain.value = 0.15; // Sawtooth should be subtle
+
+  osc1.disconnect(filterNode);
+  osc2.disconnect(filterNode);
+  osc1.connect(gainOsc1);
+  osc2.connect(gainOsc2);
+  gainOsc1.connect(filterNode);
+  gainOsc2.connect(filterNode);
+
+  // Warm tone lowpass filter
+  filterNode.type = 'lowpass';
+  filterNode.frequency.setValueAtTime(freq * 5, now);
+  filterNode.frequency.exponentialRampToValueAtTime(freq * 1.5, now + 0.3);
+
+  // Gain ADSR pluck envelope
+  gainNode.gain.setValueAtTime(0, now);
+  gainNode.gain.linearRampToValueAtTime(0.35, now + 0.006); // Attack
+  gainNode.gain.exponentialRampToValueAtTime(0.09, now + 0.28); // Decay
+  gainNode.gain.exponentialRampToValueAtTime(0.0001, now + duration); // Sustain/Release
+
+  osc1.start(now);
+  osc2.start(now);
+  osc1.stop(now + duration);
+  osc2.stop(now + duration);
+}
+
+function playSingleGuitarNote(stringIndex, fret) {
+  const midiNote = STRING_MIDI_BASE[stringIndex] + fret;
+  playGuitarSynthNote(midiNote, 0, 1.2);
+}
+
+function playChordVoicing(notes) {
+  const playMode = document.getElementById('play-mode-select').value;
+  // Sort from thickest string index to thinnest (index 0 is Corda 6 E, index 5 is Corda 1 e)
+  const sortedNotes = [...notes].sort((a, b) => a.string - b.string);
+
+  sortedNotes.forEach((note, idx) => {
+    const midiNote = STRING_MIDI_BASE[note.string] + note.fret;
+    const delay = playMode === 'strum' ? idx * 0.045 : 0; // ~45ms strumming interval
+    playGuitarSynthNote(midiNote, delay, 1.4);
+  });
+}
+
+function playChordDirect(chord) {
+  if (!chord) return;
+  const playMode = document.getElementById('play-mode-select').value;
+  
+  // Synthesize chord intervals in standard voicing register
+  let baseRootMidi = 48; // C3
+  if (chord.root >= 8) baseRootMidi = 45; // A2 for Ab/A/Bb/B to sound warmer
+
+  // Map intervals: e.g. triad is [0, 3, 7] or [0, 4, 7]
+  const intervals = chord.intervals || [0, 4, 7];
+  
+  intervals.forEach((interval, idx) => {
+    const midi = baseRootMidi + interval;
+    const delay = playMode === 'strum' ? idx * 0.045 : 0;
+    playGuitarSynthNote(midi, delay, 1.4);
+  });
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let state = {
+  activeView: 'estudo',
+  tonic: 'C',
+  scale: 'major',
+  selectedChord: null,
+  selectedSource: null,
+  extension: 'triad',
+  voicing: 'R35',
+  stringGroup: [5, 4, 3],
+  activeRegions: [{ start: 0, end: 24 }], // Array of {start, end}
+  currentPositions: [],
+  selectedVoicings: [],
+};
+
+// ─── Theory helpers ───────────────────────────────────────────────────────────
+function noteToIndex(note) {
+  let i = NOTE_NAMES.indexOf(note);
+  if (i===-1) i = FLAT_NAMES.indexOf(note);
+  return i;
+}
+function indexToNote(idx, useFlat=false) {
+  return (useFlat ? FLAT_NAMES : NOTE_NAMES)[((idx%12)+12)%12];
+}
+
+function chordFromRootAndQuality(root, quality) {
+  const extDef = EXT_DEFS[state.extension] || EXT_DEFS.triad;
+  const intervals = extDef.notes(root, quality).map(n => n.sem >= root ? n.sem - root : n.sem + 12 - root);
+  return { root, quality, fullName: indexToNote(root) + quality, originalLabel: null, intervals };
+}
+
+function getHarmonicField(tonic, scale) {
+  const ri = noteToIndex(tonic);
+  return SCALE_INTERVALS[scale].map((intv, i) => {
+    const r = (ri + intv) % 12;
+    const q = DIATONIC_SYMBOLS[scale][i];
+    const baseIntervals = q === 'dim' ? [0, 3, 6] : q === 'm' ? [0, 3, 7] : [0, 4, 7];
+    return { root: r, quality: q, fullName: indexToNote(r)+q, degree: DIATONIC_DEGREES[scale][i], intervals: baseIntervals };
+  });
+}
+
+function getModalBorrowings(tonic, scale) {
+  const r = noteToIndex(tonic);
+  const items = scale === 'major' ? [
+    { root:(r+5)%12, q:'m',  tag:'iv (Dórico/Menor)', intervals:[0,3,7] },
+    { root:(r+8)%12, q:'',   tag:'bVI (Eólio)', intervals:[0,4,7] },
+    { root:(r+10)%12,q:'',   tag:'bVII (Mixolídio)', intervals:[0,4,7] },
+    { root:(r+2)%12, q:'',   tag:'II (V/V)', intervals:[0,4,7] },
+    { root:(r+4)%12, q:'',   tag:'III (V/vi)', intervals:[0,4,7] },
+    { root:(r+8)%12, q:'dim',tag:'#Vdim (passagem)', intervals:[0,3,6] },
+  ] : [
+    { root:(r+5)%12, q:'',   tag:'IV (Dórico)', intervals:[0,4,7] },
+    { root:(r+7)%12, q:'',   tag:'V (Harmônico)', intervals:[0,4,7] },
+    { root:(r+1)%12, q:'',   tag:'bII (Napolitano)', intervals:[0,4,7] },
+    { root:r,        q:'',   tag:'I Maior (Picarda)', intervals:[0,4,7] },
+    { root:(r+11)%12,q:'dim',tag:'VIIdim (passagem)', intervals:[0,3,6] },
+  ];
+  const dSet = new Set(getHarmonicField(tonic, scale).map(c=>c.fullName));
+  return items
+    .map(it => ({ chord: { root: it.root, quality: it.q, fullName: indexToNote(it.root)+it.q, intervals: it.intervals }, tag: it.tag }))
+    .filter(it => !dSet.has(it.chord.fullName));
+}
+
+// ─── Build full note pool for current extension ────────────────────────────────
+function buildNotePool(chord) {
+  const def = EXT_DEFS[state.extension] || EXT_DEFS.triad;
+  return def.notes(chord.root, chord.quality);
+}
+
+// ─── Guitar engine ────────────────────────────────────────────────────────────
+function getNoteAtFret(stringIndex, fret) {
+  return (STRING_TUNING[stringIndex] + fret) % 12;
+}
+
+function findVoicingPositions(chord) {
+  const fullPool = buildNotePool(chord);
+  const def = EXT_DEFS[state.extension];
+  const [s1, s2, s3] = state.stringGroup;
+
+  let voicingPool;
+  if (state.extension === 'triad' || !def.useExt && !def.susLabel && !def.sixLabel) {
+    voicingPool = fullPool.slice(0, 3);
+  } else {
+    const vdef = VOICING_DEFS[state.voicing] || VOICING_DEFS.R35;
+    voicingPool = vdef.pick(fullPool) || fullPool.slice(0, 3);
+  }
+
+  const positions = [];
+  const noteValues = voicingPool.map(p => p.sem);
+
+  // Search in all active regions
+  for (const reg of state.activeRegions) {
+    const rStart = reg.start;
+    const rEnd = reg.end;
+
+    for (let inv = 0; inv < 3; inv++) {
+      const bassIdx = inv % voicingPool.length;
+      const midIdx  = (inv+1) % voicingPool.length;
+      const topIdx  = (inv+2) % voicingPool.length;
+
+      const bassNote = noteValues[bassIdx];
+      const midNote  = noteValues[midIdx];
+      const topNote  = noteValues[topIdx];
+
+      for (let f3 = rStart; f3 <= rEnd; f3++) {
+        if (getNoteAtFret(s3, f3) !== bassNote) continue;
+        const f2mn = Math.max(0, f3-4), f2mx = Math.min(rEnd, f3+4);
+        for (let f2 = f2mn; f2 <= f2mx; f2++) {
+          if (getNoteAtFret(s2, f2) !== midNote) continue;
+          const f1mn = Math.max(0, f2-4), f1mx = Math.min(rEnd, f2+4);
+          for (let f1 = f1mn; f1 <= f1mx; f1++) {
+            if (getNoteAtFret(s1, f1) !== topNote) continue;
+            const hi = Math.max(f1,f2,f3), lo = Math.min(f1,f2,f3);
+            if (hi-lo > 4) continue;
+            const displayStart = Math.max(0, lo-1);
+            
+            // Prevent duplicates from overlapping regions
+            const dup = positions.some(p => 
+              p.inversion === inv && 
+              p.frets[0] === f1 && 
+              p.frets[1] === f2 && 
+              p.frets[2] === f3
+            );
+            if (dup) continue;
+
+            positions.push({
+              inversion: inv,
+              inversionName: ['Pos. Fundamental','1ª Inversão','2ª Inversão'][inv],
+              strings: state.stringGroup,
+              frets: [f1,f2,f3],
+              notes: [
+                { string:s1, fret:f1, ...voicingPool[topIdx] },
+                { string:s2, fret:f2, ...voicingPool[midIdx] },
+                { string:s3, fret:f3, ...voicingPool[bassIdx] },
+              ],
+              displayStart,
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return positions.sort((a,b) => {
+    if (a.inversion !== b.inversion) return a.inversion - b.inversion;
+    return Math.min(...a.frets) - Math.min(...b.frets);
+  });
+}
+
+// ─── SVG rendering ────────────────────────────────────────────────────────────
+function renderFretboardSVG(position) {
+  const W=170, H=210, sx=30, sy=15, ss=22, fs=30, nf=5;
+  const tw=ss*5, th=fs*nf;
+  let svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+
+  for (let f=0; f<=nf; f++) {
+    const y=sy+f*fs;
+    svg += `<line x1="${sx}" y1="${y}" x2="${sx+tw}" y2="${y}" stroke="${f===0?'#7a6a58':'#2e2a26'}" stroke-width="${f===0?4:1.5}"/>`;
+  }
+  for (let s=0; s<6; s++) {
+    const x=sx+s*ss;
+    svg += `<line x1="${x}" y1="${sy}" x2="${x}" y2="${sy+th}" stroke="#4a443a" stroke-width="${1+(5-s)*0.3}"/>`;
+  }
+  for (let i=0; i<=nf; i++) {
+    const fn=position.displayStart+i;
+    if (fn>0&&fn<=24) svg += `<text x="${sx-8}" y="${sy+i*fs+4}" font-family="IBM Plex Mono" font-size="9" fill="#8a8078" text-anchor="end">${fn}</text>`;
+  }
+
+  // Interactivity directly on individual note circles
+  for (const note of position.notes) {
+    const cx=sx+note.string*ss;
+    const cy=sy+(note.fret-position.displayStart)*fs;
+    const col = noteColor(note.func);
+    const noteName = indexToNote(note.sem, note.useFlat);
+    
+    svg += `<g style="cursor: pointer;" onclick="playSingleGuitarNote(${note.string}, ${note.fret})">`;
+    svg += `<circle cx="${cx}" cy="${cy}" r="11" fill="${col}"/>`;
+    svg += `<text x="${cx}" y="${cy-3}" font-family="IBM Plex Mono" font-size="8" font-weight="600" fill="#fff" text-anchor="middle">${note.func}</text>`;
+    svg += `<text x="${cx}" y="${cy+7}" font-family="IBM Plex Mono" font-size="7" fill="#fff" text-anchor="middle">${noteName}</text>`;
+    svg += `</g>`;
+  }
+
+  const iy=sy+th+16;
+  for (let s=0; s<6; s++) {
+    const cx=sx+s*ss;
+    const pn=position.notes.find(n=>n.string===s);
+    if (pn) {
+      svg += `<circle cx="${cx}" cy="${iy-3}" r="4" fill="${noteColor(pn.func)}"/>`;
+    } else {
+      svg += `<text x="${cx}" y="${iy}" font-family="IBM Plex Mono" font-size="11" font-weight="600" fill="#3a322a" text-anchor="middle">×</text>`;
+    }
+  }
+  svg += '</svg>';
+  return svg;
+}
+
+function renderVoicingCard(position, index) {
+  const chord = state.selectedChord;
+  const extDef = EXT_DEFS[state.extension];
+  const bassNote = position.notes[position.notes.length-1];
+  const bassName = indexToNote(bassNote.sem, bassNote.useFlat);
+  const rootName = indexToNote(chord.root);
+
+  let title = rootName + chord.quality;
+  if (state.extension !== 'triad') title += extDef.label.replace('Tríade','').trim();
+  if (bassNote.func !== 'R') title += `/${bassName}`;
+
+  const voicingLabel = (state.extension !== 'triad')
+    ? (VOICING_DEFS[state.voicing]?.label || 'R-3-5')
+    : '';
+
+  const strNames = position.strings.map(s => STRING_LABELS[s]).join('-');
+  const subtitle = [position.inversionName, voicingLabel, strNames].filter(Boolean).join(' · ');
+
+  // Check if this position is already selected in the song route
+  const isSelected = state.selectedVoicings && state.selectedVoicings.some(v => 
+    v.chordName === title && 
+    v.inversionName === position.inversionName && 
+    v.frets.join(',') === position.frets.join(',')
+  );
+
+  const selectBtnText = isSelected ? '✓ Selecionado' : '＋ Fixar na Música';
+  const selectBtnStyle = isSelected ? 'background: var(--accent); color: var(--bg); border-color: var(--accent);' : '';
+
+  return `<div class="triad-card" style="${isSelected ? 'border-color: var(--accent);' : ''}">
+    <div class="triad-header" style="display:flex; flex-direction:column; gap:0.5rem; width:100%;">
+      <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+        <div>
+          <div class="triad-title">${title}</div>
+          <div class="triad-subtitle">${subtitle}</div>
+        </div>
+        <button class="play-voicing-btn" onclick="playChordVoicingIndex(${index})" title="Ouvir este shape">
+          🔊 Ouvir
+        </button>
+      </div>
+      <button class="play-voicing-btn" style="width:100%; justify-content:center; ${selectBtnStyle}" onclick="toggleSelectVoicingIndex(${index})">
+        ${selectBtnText}
+      </button>
+    </div>
+    <div class="fretboard-container">${renderFretboardSVG(position)}</div>
+  </div>`;
+}
+
+function playChordVoicingIndex(index) {
+  const pos = state.currentPositions && state.currentPositions[index];
+  if (pos) {
+    playChordVoicing(pos.notes);
+  }
+}
+
+function toggleSelectVoicingIndex(index) {
+  const pos = state.currentPositions && state.currentPositions[index];
+  if (!pos) return;
+
+  const chord = state.selectedChord;
+  const extDef = EXT_DEFS[state.extension];
+  const bassNote = pos.notes[pos.notes.length-1];
+  const bassName = indexToNote(bassNote.sem, bassNote.useFlat);
+  const rootName = indexToNote(chord.root);
+
+  let title = rootName + chord.quality;
+  if (state.extension !== 'triad') title += extDef.label.replace('Tríade','').trim();
+  if (bassNote.func !== 'R') title += `/${bassName}`;
+
+  const voicingLabel = (state.extension !== 'triad')
+    ? (VOICING_DEFS[state.voicing]?.label || 'R-3-5')
+    : '';
+
+  const strNames = pos.strings.map(s => STRING_LABELS[s]).join('-');
+  const subtitle = [pos.inversionName, voicingLabel, strNames].filter(Boolean).join(' · ');
+
+  const existingIdx = state.selectedVoicings.findIndex(v => 
+    v.chordName === title && 
+    v.inversionName === pos.inversionName && 
+    v.frets.join(',') === pos.frets.join(',')
+  );
+
+  if (existingIdx !== -1) {
+    state.selectedVoicings.splice(existingIdx, 1);
+  } else {
+    state.selectedVoicings.push({
+      ...pos,
+      chordName: title,
+      subtitle: subtitle
+    });
+  }
+
+  renderSelectedVoicings();
+  renderTriads();
+}
+
+function removeSelectedVoicing(idx) {
+  state.selectedVoicings.splice(idx, 1);
+  renderSelectedVoicings();
+  renderTriads();
+}
+
+function clearSelectedVoicings() {
+  state.selectedVoicings = [];
+  renderSelectedVoicings();
+  renderTriads();
+}
+
+function playSelectedVoicing(idx) {
+  const pos = state.selectedVoicings[idx];
+  if (pos) {
+    playChordVoicing(pos.notes);
+  }
+}
+
+function renderSelectedVoicings() {
+  const container = document.getElementById('selected-voicings-grid');
+  const section = document.getElementById('selected-voicings-section');
+  
+  if (!state.selectedVoicings || state.selectedVoicings.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  
+  section.style.display = 'block';
+  
+  container.innerHTML = state.selectedVoicings.map((pos, idx) => {
+    return `<div class="triad-card" style="border-color: var(--accent);">
+      <div class="triad-header" style="display:flex; flex-direction:column; gap:0.5rem; width:100%;">
+        <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+          <div>
+            <div class="triad-title">${pos.chordName}</div>
+            <div class="triad-subtitle">${pos.subtitle}</div>
+          </div>
+          <button class="play-voicing-btn" onclick="playSelectedVoicing(${idx})" title="Ouvir este shape">
+            🔊 Ouvir
+          </button>
+        </div>
+        <button class="play-voicing-btn" style="width:100%; justify-content:center; border-color: var(--root-note); color: #ff8888;" onclick="removeSelectedVoicing(${idx})">
+          ✕ Remover
+        </button>
+      </div>
+      <div class="fretboard-container">${renderFretboardSVG(pos)}</div>
+    </div>`;
+  }).join('');
+}
+
+function updateLegend() {
+  const ext = state.extension;
+  const def = EXT_DEFS[ext] || EXT_DEFS.triad;
+
+  const leg7 = document.getElementById('leg-7');
+  const leg9 = document.getElementById('leg-9');
+  const legSus = document.getElementById('leg-sus');
+
+  leg7.classList.toggle('visible', !!(def.useExt && def.extLabel));
+  leg9.classList.toggle('visible', !!(def.nineLabel));
+  legSus.classList.toggle('visible', !!(def.susLabel));
+
+  if (def.extLabel) document.getElementById('leg-7-label').textContent = `${def.extLabel} — Sétima`;
+  if (def.nineLabel) document.getElementById('leg-9-label').textContent = `${def.nineLabel} — Nona`;
+  if (def.susLabel) document.getElementById('leg-sus-label').textContent = `${def.susLabel} — Sus`;
+}
+
+function renderTriads() {
+  const container = document.getElementById('triads-grid');
+  const titleEl   = document.getElementById('results-title');
+  const sourceEl  = document.getElementById('results-source');
+
+  if (!state.selectedChord) {
+    container.innerHTML = `<div class="empty-state"><p>Selecione um acorde</p><small>Os diagramas aparecerão aqui</small></div>`;
+    titleEl.textContent = 'Selecione um acorde para ver os voicings';
+    sourceEl.classList.remove('visible');
+    return;
+  }
+
+  updateLegend();
+
+  const positions = findVoicingPositions(state.selectedChord);
+  state.currentPositions = positions; // Save to global state
+  const chordLabel = state.selectedChord.originalLabel || state.selectedChord.fullName;
+  const extLabel = state.extension !== 'triad' ? ` — ${EXT_DEFS[state.extension].label}` : '';
+
+  titleEl.textContent = `${positions.length} voicings encontrados — ${chordLabel}${extLabel}`;
+
+  const srcMap = { modal:'Empréstimo Modal', search:'Busca Livre', cifra:'Modo Cifra' };
+  if (srcMap[state.selectedSource]) {
+    sourceEl.textContent = srcMap[state.selectedSource];
+    sourceEl.style.display = 'inline-block';
+  } else {
+    sourceEl.style.display = 'none';
+  }
+
+  if (positions.length === 0) {
+    container.innerHTML = `<div class="empty-state"><p>Nenhum voicing encontrado</p><small>Tente outra região ou conjunto de cordas</small></div>`;
+    return;
+  }
+
+  container.innerHTML = positions.map((pos, idx) => renderVoicingCard(pos, idx)).join('');
+}
+
+// ─── Extension & Voicing buttons ──────────────────────────────────────────────
+function initExtensionButtons() {
+  const voicingPanel = document.getElementById('voicing-panel');
+
+  document.querySelectorAll('.ext-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.ext-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.extension = btn.dataset.ext;
+
+      const def = EXT_DEFS[state.extension];
+      const showVoicing = state.extension !== 'triad';
+      voicingPanel.style.display = showVoicing ? 'block' : 'none';
+
+      if (!showVoicing) state.voicing = 'R35';
+
+      updateLegend();
+      renderTriads();
+    });
+  });
+
+  document.querySelectorAll('.voicing-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.voicing-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.voicing = btn.dataset.voicing;
+      renderTriads();
+    });
+  });
+}
+
+// ─── Chord buttons ────────────────────────────────────────────────────────────
+function clearAllChordSelections() {
+  document.querySelectorAll('.chord-btn').forEach(b => b.classList.remove('selected'));
+}
+
+function renderChordButtons() {
+  const container = document.getElementById('chord-buttons');
+  const chords = getHarmonicField(state.tonic, state.scale);
+  container.innerHTML = chords.map((c,i) =>
+    `<button class="chord-btn" data-index="${i}">${c.fullName}</button>`
+  ).join('');
+  container.querySelectorAll('.chord-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      clearAllChordSelections();
+      btn.classList.add('selected');
+      const c = getHarmonicField(state.tonic, state.scale)[+btn.dataset.index];
+      state.selectedChord = c;
+      state.selectedSource = 'diatonic';
+      clearSearch();
+      renderTriads();
+    });
+  });
+}
+
+function renderModalButtons() {
+  const container = document.getElementById('modal-buttons');
+  const tagEl     = document.getElementById('modal-tag');
+  const items = getModalBorrowings(state.tonic, state.scale);
+  container.innerHTML = items.map((it,i) =>
+    `<button class="chord-btn modal-btn" data-modal-index="${i}">${it.chord.fullName}</button>`
+  ).join('');
+  tagEl.textContent = '';
+  container.querySelectorAll('.chord-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const it = getModalBorrowings(state.tonic, state.scale)[+btn.dataset.modalIndex];
+      clearAllChordSelections();
+      btn.classList.add('selected');
+      state.selectedChord = it.chord;
+      state.selectedSource = 'modal';
+      tagEl.textContent = it.tag;
+      clearSearch();
+      renderTriads();
+    });
+  });
+}
+
+function selectChordIndex(i) {
+  const c = getHarmonicField(state.tonic, state.scale)[i];
+  state.selectedChord = c;
+  state.selectedSource = 'diatonic';
+  const btn = document.querySelector(`.chord-btn[data-index="${i}"]`);
+  if (btn) btn.classList.add('selected');
+  renderTriads();
+}
+
+// ─── Collapsible ──────────────────────────────────────────────────────────────
+function initCollapsible() {
+  const toggle = document.getElementById('modal-toggle');
+  const body   = document.getElementById('modal-body');
+  const arrow  = document.getElementById('modal-arrow');
+  toggle.addEventListener('click', () => {
+    const open = body.classList.toggle('open');
+    arrow.classList.toggle('open', open);
+  });
+}
+
+// ─── Search ───────────────────────────────────────────────────────────────────
+const EXT_CATALOG_DEFS = [
+  { sym:'',     ext:'triad', label:'Maior' },
+  { sym:'m',    ext:'triad', label:'Menor' },
+  { sym:'dim',  ext:'triad', label:'Diminuto' },
+  { sym:'',     ext:'maj7',  label:'Maior 7' },
+  { sym:'',     ext:'7',     label:'Dominante 7' },
+  { sym:'m',    ext:'m7',    label:'m7' },
+  { sym:'dim',  ext:'m7b5',  label:'m7(b5) / ø' },
+  { sym:'dim',  ext:'dim7',  label:'dim7' },
+  { sym:'',     ext:'sus2',  label:'Sus2' },
+  { sym:'',     ext:'sus4',  label:'Sus4' },
+  { sym:'',     ext:'7sus4', label:'7sus4' },
+  { sym:'',     ext:'add9',  label:'add9' },
+  { sym:'m',    ext:'m9',    label:'m9' },
+  { sym:'',     ext:'7b9',   label:'7(b9)' },
+  { sym:'',     ext:'7s9',   label:'7(#9)' },
+  { sym:'',     ext:'6',     label:'6' },
+  { sym:'m',    ext:'m6',    label:'m6' },
+];
+
+const EXT_PARSE_MAP = [
+  { re: /^(maj7|M7|7M|major7)$/i, ext:'maj7' },
+  { re: /^(7)$/, ext:'7' },
+  { re: /^(m7)$/, ext:'m7' },
+  { re: /^(m7b5|m7\(b5\)|ø|Ø)$/, ext:'m7b5' },
+  { re: /^(dim7|o7|°7)$/, ext:'dim7' },
+  { re: /^(sus2)$/i, ext:'sus2' },
+  { re: /^(sus4|sus)$/i, ext:'sus4' },
+  { re: /^(7sus4)$/i, ext:'7sus4' },
+  { re: /^(add9|9|add2)$/i, ext:'add9' },
+  { re: /^(m9)$/, ext:'m9' },
+  { re: /^(7b9|7\(b9\))$/, ext:'7b9' },
+  { re: /^(7#9|7\(#9\))$/, ext:'7s9' },
+  { re: /^(6)$/, ext:'6' },
+  { re: /^(m6)$/, ext:'m6' },
+  { re: /^(m|min|minor)$/i, ext:'triad', quality:'m' },
+  { re: /^(dim|°|º|o)$/i, ext:'triad', quality:'dim' },
+  { re: /^$/, ext:'triad', quality:'' },
+];
+
+function buildAllExtChords() {
+  const all = [];
+  const seen = new Set();
+  for (let r = 0; r < 12; r++) {
+    for (const def of EXT_CATALOG_DEFS) {
+      const root = indexToNote(r);
+      const rootFlat = indexToNote(r, true);
+      const suffix = extSearchSuffix(def.ext, def.sym);
+      const name = root + suffix;
+      const altName = rootFlat !== root ? rootFlat + suffix : null;
+      if (!seen.has(name)) {
+        seen.add(name);
+        if (altName) seen.add(altName);
+        all.push({ name, altName, r, quality: def.sym, ext: def.ext, typeLabel: def.label });
+      }
+    }
+  }
+  return all;
+}
+
+function extSearchSuffix(ext, quality) {
+  if (ext==='triad') return quality;
+  if (ext==='maj7') return 'maj7';
+  if (ext==='7') return '7';
+  if (ext==='m7') return 'm7';
+  if (ext==='m7b5') return 'm7(b5)';
+  if (ext==='dim7') return 'dim7';
+  if (ext==='sus2') return 'sus2';
+  if (ext==='sus4') return 'sus4';
+  if (ext==='7sus4') return '7sus4';
+  if (ext==='add9') return 'add9';
+  if (ext==='m9') return 'm9';
+  if (ext==='7b9') return '7(b9)';
+  if (ext==='7s9') return '7(#9)';
+  if (ext==='6') return '6';
+  if (ext==='m6') return 'm6';
+  return quality;
+}
+
+const ALL_EXT_CHORDS = buildAllExtChords();
+
+function searchChords(query) {
+  if (!query) return [];
+  const q = query.trim().toLowerCase();
+  return ALL_EXT_CHORDS.filter(c =>
+    c.name.toLowerCase().startsWith(q) ||
+    (c.altName && c.altName.toLowerCase().startsWith(q))
+  ).slice(0, 12);
+}
+
+function parseChordInput(input) {
+  const raw = input.trim();
+  const norm = raw.replace(/°/g,'dim').replace(/º/g,'dim').replace(/Ø/g,'m7b5').replace(/ø/g,'m7b5');
+  const rootMatch = norm.match(/^([A-G][#b]?)(.*)/);
+  if (!rootMatch) return null;
+  let rootStr = rootMatch[1];
+  const tail = rootMatch[2].replace(/\/[A-G][#b]?$/, '').trim();
+
+  if (FLAT_TO_SHARP[rootStr]) rootStr = FLAT_TO_SHARP[rootStr];
+  const rootIdx = noteToIndex(rootStr);
+  if (rootIdx === -1) return null;
+
+  for (const p of EXT_PARSE_MAP) {
+    if (p.re.test(tail)) {
+      const quality = p.quality !== undefined ? p.quality : (tail.startsWith('m') && !tail.toLowerCase().startsWith('maj') ? 'm' : '');
+      const extDef = EXT_DEFS[p.ext] || EXT_DEFS.triad;
+      const intervals = extDef.notes(rootIdx, quality).map(n => n.sem >= rootIdx ? n.sem - rootIdx : n.sem + 12 - rootIdx);
+      return {
+        root: rootIdx,
+        quality: quality,
+        fullName: rootStr + extSearchSuffix(p.ext, quality),
+        originalLabel: raw,
+        intervals: intervals,
+        _ext: p.ext,
+      };
+    }
+  }
+  return null;
+}
+
+let acHighlight = -1;
+
+function clearSearch() {
+  const inp = document.getElementById('chord-search');
+  const list = document.getElementById('autocomplete-list');
+  const clr  = document.getElementById('search-clear');
+  const hint = document.getElementById('search-hint');
+  if (inp)  inp.value = '';
+  if (list) { list.innerHTML = ''; list.classList.remove('visible'); }
+  if (clr)  clr.style.display = 'none';
+  if (hint) hint.textContent = 'Suporta extensões: Cmaj7, Am7, G7, Dsus4, Fadd9…';
+  acHighlight = -1;
+}
+
+function initSearch() {
+  const input = document.getElementById('chord-search');
+  const list  = document.getElementById('autocomplete-list');
+  const clear = document.getElementById('search-clear');
+  const hint  = document.getElementById('search-hint');
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    acHighlight = -1;
+    clear.style.display = q ? 'block' : 'none';
+    if (!q) { list.innerHTML=''; list.classList.remove('visible'); return; }
+
+    const results = searchChords(q);
+    if (!results.length) {
+      list.innerHTML = `<div class="autocomplete-item" style="color:var(--text-muted)">Nenhum resultado</div>`;
+      list.classList.add('visible');
+      return;
+    }
+
+    list.innerHTML = results.map((c,i) =>
+      `<div class="autocomplete-item" data-idx="${i}" data-chord-name="${c.name}">
+        <span>${c.name}${c.altName?` <span style="color:var(--text-muted);font-size:.8em">/ ${c.altName}</span>`:''}
+        </span><span class="tag">${c.typeLabel}</span>
+      </div>`
+    ).join('');
+    list.classList.add('visible');
+
+    list.querySelectorAll('.autocomplete-item').forEach(item => {
+      item.addEventListener('mousedown', e => { e.preventDefault(); selectFromSearch(item.dataset.chordName); });
+    });
+  });
+
+  input.addEventListener('keydown', e => {
+    const items = list.querySelectorAll('.autocomplete-item');
+    if (!items.length) return;
+    if (e.key==='ArrowDown') { e.preventDefault(); acHighlight=Math.min(acHighlight+1,items.length-1); highlightItems(items); }
+    else if (e.key==='ArrowUp') { e.preventDefault(); acHighlight=Math.max(acHighlight-1,0); highlightItems(items); }
+    else if (e.key==='Enter') {
+      e.preventDefault();
+      if (acHighlight>=0&&items[acHighlight]) selectFromSearch(items[acHighlight].dataset.chordName);
+      else {
+        const chord = parseChordInput(input.value);
+        if (chord) { applyParsedChord(chord); list.classList.remove('visible'); }
+        else hint.textContent = `"${input.value.trim()}" não reconhecido.`;
+      }
+    } else if (e.key==='Escape') list.classList.remove('visible');
+  });
+
+  input.addEventListener('blur', () => setTimeout(() => list.classList.remove('visible'), 150));
+  input.addEventListener('focus', () => { if (input.value.trim()) list.classList.add('visible'); });
+  clear.addEventListener('click', () => { clearSearch(); input.focus(); });
+}
+
+function highlightItems(items) {
+  items.forEach((it,i) => it.classList.toggle('highlighted', i===acHighlight));
+}
+
+function selectFromSearch(name) {
+  const input = document.getElementById('chord-search');
+  const list  = document.getElementById('autocomplete-list');
+  input.value = name;
+  list.classList.remove('visible');
+  const chord = parseChordInput(name);
+  if (chord) applyParsedChord(chord);
+}
+
+function applyParsedChord(chord) {
+  clearAllChordSelections();
+  state.selectedChord = chord;
+  state.selectedSource = 'search';
+  if (chord._ext && chord._ext !== state.extension) {
+    state.extension = chord._ext;
+    document.querySelectorAll('.ext-btn').forEach(b => b.classList.toggle('active', b.dataset.ext===chord._ext));
+    const showVoicing = chord._ext !== 'triad';
+    document.getElementById('voicing-panel').style.display = showVoicing ? 'block' : 'none';
+  }
+  const hint = document.getElementById('search-hint');
+  if (hint) hint.textContent = `Exibindo voicings para "${chord.originalLabel || chord.fullName}"`;
+  renderTriads();
+}
+
+// ─── Mode toggle ──────────────────────────────────────────────────────────────
+function initModeToggle() {
+  const btn = document.getElementById('mode-toggle');
+  btn.addEventListener('click', () => {
+    const toEstudo = state.activeView === 'cifra';
+    state.activeView = toEstudo ? 'estudo' : 'cifra';
+    btn.textContent = toEstudo ? '📄 Modo Cifra' : '🎸 Modo Estudo';
+    document.getElementById('estudo-view').classList.toggle('active', toEstudo);
+    document.getElementById('cifra-view').classList.toggle('active', !toEstudo);
+    clearAllChordSelections();
+    syncSelectors();
+    if (toEstudo) selectChordIndex(0);
+    else renderCifraActiveChord();
+  });
+}
+
+// ─── Cifra parser ─────────────────────────────────────────────────────────────
+let parsedCifraChords = [];
+let currentCifraChord = null;
+
+function parseCifraChordToken(raw) {
+  let text = raw.trim()
+    .replace(/°/g,'dim').replace(/º/g,'dim')
+    .replace(/Ø/g,'m7b5').replace(/ø/g,'m7b5');
+
+  const m = text.match(/^([A-G][#b]?)(.*?)(?:\/[A-G][#b]?)?$/);
+  if (!m) return null;
+  let root = m[1]; const tail = m[2];
+  if (FLAT_TO_SHARP[root]) root = FLAT_TO_SHARP[root];
+  const ri = noteToIndex(root);
+  if (ri===-1) return null;
+
+  let quality = '', ext = 'triad';
+  if (/dim/.test(tail)||/°/.test(tail)||/º/.test(tail)) { quality='dim'; }
+  else if (/^m/.test(tail)&&!/maj/i.test(tail)) { quality='m'; }
+
+  for (const p of EXT_PARSE_MAP) {
+    if (p.re.test(tail)) {
+      ext = p.ext;
+      if (p.quality!==undefined) quality = p.quality;
+      break;
+    }
+  }
+
+  if (/^m7b5/.test(tail)||/^m7\(b5\)/.test(tail)||/^ø/.test(tail)) { quality='dim'; ext='m7b5'; }
+  if (/^m7/.test(tail)) { quality='m'; ext='m7'; }
+  if (/^m9/.test(tail)) { quality='m'; ext='m9'; }
+  if (/^m6/.test(tail)) { quality='m'; ext='m6'; }
+  if (/^m\b/.test(tail) && ext==='triad') { quality='m'; }
+
+  const suffix = extSearchSuffix(ext, quality);
+  const extDef = EXT_DEFS[ext] || EXT_DEFS.triad;
+  const intervals = extDef.notes(ri, quality).map(n => n.sem >= ri ? n.sem - ri : n.sem + 12 - ri);
+
+  return { root: ri, quality, ext, fullName: root+suffix, originalName: raw, intervals };
+}
+
+function processCifraText() {
+  const text = document.getElementById('cifra-textarea').value;
+  const viewer  = document.getElementById('cifra-output-viewer');
+  const chips   = document.getElementById('cifra-detected-buttons');
+
+  if (!text.trim()) {
+    viewer.innerHTML = 'Cole uma cifra e clique em Processar.';
+    chips.innerHTML = '<div style="font-size:.85rem;color:var(--text-muted)">Nenhum acorde processado ainda</div>';
+    parsedCifraChords = []; currentCifraChord = null;
+    state.selectedChord = null; renderTriads(); return;
+  }
+
+  const keyM = text.match(/(?:Tom|Key):\s*([A-G][#b]?)/i);
+  if (keyM) {
+    let t = keyM[1]; if (FLAT_TO_SHARP[t]) t = FLAT_TO_SHARP[t];
+    document.getElementById('tonic-select').value = t;
+    state.tonic = t; renderChordButtons(); renderModalButtons();
+  }
+
+  const isChordToken = tok =>
+    /^[A-G][#b]?(?:m|M|maj|min|dim|aug|sus|add|alt|°|º|Ø|ø)?(?:maj)?(?:7|9|11|13)?(?:\((?:b|#)?\d+\))?(?:\/[A-G][#b]?)?$/.test(tok);
+
+  const detectedMap = new Map();
+  const lines = text.split('\n');
+  const rendered = lines.map(line => {
+    const tokens = line.split(/\s+/).filter(Boolean);
+    const chordCount = tokens.filter(isChordToken).length;
+    const otherCount = tokens.length - chordCount;
+    const isChordLine = chordCount > 0 && chordCount >= otherCount;
+
+    if (isChordLine) {
+      let out = ''; let last = 0;
+      const re = /\S+/g; let m;
+      while ((m = re.exec(line)) !== null) {
+        const tok = m[0];
+        out += line.substring(last, m.index);
+        if (isChordToken(tok)) {
+          const parsed = parseCifraChordToken(tok);
+          if (parsed) {
+            if (!detectedMap.has(parsed.fullName)) detectedMap.set(parsed.fullName, parsed);
+            out += `<span class="cifra-chord-link" data-chord="${parsed.fullName}">${tok}</span>`;
+          } else out += tok;
+        } else out += tok;
+        last = re.lastIndex;
+      }
+      out += line.substring(last);
+      return out;
+    } else {
+      return line.replace(/<b>(.*?)<\/b>/g, (_, tok) => {
+        const parsed = parseCifraChordToken(tok);
+        if (parsed) {
+          if (!detectedMap.has(parsed.fullName)) detectedMap.set(parsed.fullName, parsed);
+          return `<span class="cifra-chord-link" data-chord="${parsed.fullName}">${tok}</span>`;
+        }
+        return tok;
+      });
+    }
+  });
+
+  parsedCifraChords = Array.from(detectedMap.values());
+
+  if (!parsedCifraChords.length) {
+    chips.innerHTML = '<div style="font-size:.85rem;color:var(--text-muted)">Nenhum acorde detectado</div>';
+    viewer.innerHTML = rendered.join('\n'); return;
+  }
+
+  chips.innerHTML = parsedCifraChords.map(c =>
+    `<button class="chord-btn cifra-detected-btn" data-chord="${c.fullName}">${c.originalName}</button>`
+  ).join('');
+  
+  // Single click selects without playing sound
+  chips.querySelectorAll('.cifra-detected-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectCifraChord(btn.dataset.chord);
+    });
+  });
+
+  viewer.innerHTML = rendered.join('\n');
+  viewer.querySelectorAll('.cifra-chord-link').forEach(link => {
+    link.addEventListener('click', () => {
+      selectCifraChord(link.dataset.chord);
+    });
+  });
+
+  selectCifraChord(parsedCifraChords[0].fullName);
+}
+
+function selectCifraChord(fullName) {
+  currentCifraChord = fullName;
+  const match = parsedCifraChords.find(c => c.fullName === fullName);
+  if (!match) return;
+
+  document.querySelectorAll('.cifra-detected-btn').forEach(b => b.classList.toggle('selected', b.dataset.chord===fullName));
+  document.querySelectorAll('.cifra-chord-link').forEach(l => l.classList.toggle('active', l.dataset.chord===fullName));
+
+  state.selectedChord = { root: match.root, quality: match.quality, fullName: match.fullName, originalLabel: match.originalName, intervals: match.intervals };
+  state.selectedSource = 'cifra';
+  state.extension = match.ext || 'triad';
+  document.querySelectorAll('.ext-btn').forEach(b => b.classList.toggle('active', b.dataset.ext===state.extension));
+  document.getElementById('voicing-panel').style.display = state.extension!=='triad' ? 'block' : 'none';
+  updateLegend();
+  renderTriads();
+}
+
+function renderCifraActiveChord() {
+  if (currentCifraChord) selectCifraChord(currentCifraChord);
+  else if (parsedCifraChords.length) selectCifraChord(parsedCifraChords[0].fullName);
+  else { state.selectedChord = null; renderTriads(); }
+}
+
+// ─── URL Fetch with CORS proxy fallback ──────────────────────────────────────
+async function fetchCifraFromURL(url) {
+  const proxies = [
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`
+  ];
+  
+  for (const proxy of proxies) {
+    try {
+      const res = await fetch(proxy(url));
+      if (!res.ok) continue;
+      const text = await res.text();
+      if (text.startsWith('{')) {
+        try {
+          const json = JSON.parse(text);
+          if (json.contents) return json.contents;
+        } catch {}
+      }
+      return text;
+    } catch (e) {
+      console.warn('Proxy failed:', e.message);
+    }
+  }
+  throw new Error('Não foi possível carregar a cifra. Verifique o link ou tente novamente.');
+}
+
+function extractCifraFromHTML(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  
+  let pre = doc.querySelector('pre');
+  if (!pre) pre = doc.querySelector('.cifra-mono') || doc.querySelector('.cifra') || doc.querySelector('[class*="cifra"]');
+  if (!pre) throw new Error('Conteúdo da cifra não encontrado.');
+  
+  let text = pre.textContent || pre.innerText;
+  let title = '', artist = '', key = null;
+  
+  const titleEl = doc.querySelector('h1') || doc.querySelector('.t1') || doc.querySelector('[class*="title"]');
+  if (titleEl) title = titleEl.textContent.replace(/cifra|tablatura/gi, '').trim();
+  
+  const artistEl = doc.querySelector('h2') || doc.querySelector('.t3') || doc.querySelector('[class*="artist"]');
+  if (artistEl) artist = artistEl.textContent.trim();
+  
+  const keyEl = doc.getElementById('cifra_tom') || doc.querySelector('[id*="tom"]') || doc.querySelector('[class*="tom"]');
+  if (keyEl) key = keyEl.textContent.replace(/Tom:/i, '').trim();
+  
+  if (!key) {
+    const km = text.match(/(?:Tom|Key):\s*([A-G][#b]?)/i);
+    if (km) key = km[1];
+  }
+  
+  return { title, artist, key, text };
+}
+
+function showCifraLoader(show) {
+  const loader = document.getElementById('cifra-loader');
+  const errorEl = document.getElementById('cifra-error');
+  if (loader) loader.style.display = show ? 'block' : 'none';
+  if (errorEl) errorEl.style.display = 'none';
+}
+
+function showCifraError(msg) {
+  const errorEl = document.getElementById('cifra-error');
+  if (errorEl) {
+    errorEl.textContent = msg || 'Erro ao carregar a cifra.';
+    errorEl.style.display = 'block';
+  }
+}
+
+function showSongInfo(title, artist, key) {
+  const info = document.getElementById('cifra-song-info');
+  const titleEl = document.getElementById('cifra-song-title');
+  const artistEl = document.getElementById('cifra-song-artist');
+  const keyEl = document.getElementById('cifra-song-key');
+  
+  if (info) info.style.display = (title || artist || key) ? 'block' : 'none';
+  if (titleEl) titleEl.textContent = title || '';
+  if (artistEl) artistEl.textContent = artist || '';
+  if (keyEl) keyEl.textContent = key ? `Tom: ${key}` : '';
+}
+
+async function loadCifraFromURL(url) {
+  if (!url || !url.startsWith('http')) {
+    showCifraError('Insira um link válido.');
+    return;
+  }
+  
+  showCifraLoader(true);
+  showSongInfo('', '', null);
+  
+  try {
+    const html = await fetchCifraFromURL(url);
+    const { title, artist, key, text } = extractCifraFromHTML(html);
+    
+    showCifraLoader(false);
+    showSongInfo(title, artist, key);
+    
+    document.getElementById('cifra-textarea').value = text;
+    processCifraText();
+  } catch (e) {
+    showCifraLoader(false);
+    showCifraError(e.message || 'Erro ao carregar a cifra.');
+  }
+}
+
+// ─── Shared selectors ─────────────────────────────────────────────────────────
+function renderStringGroupContainers() {
+  const html = ['1,2,3','2,3,4','3,4,5','4,5,6'].map(s =>
+    `<button class="string-group-btn" data-strings="${s}">${s.replace(/,/g,'-')}</button>`
+  ).join('');
+  document.querySelectorAll('.string-group-container').forEach(c => { c.innerHTML = html; c.style.display='flex'; c.style.gap='0.5rem'; });
+  document.querySelectorAll('.string-group-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sv = btn.dataset.strings;
+      document.querySelectorAll(`.string-group-btn[data-strings="${sv}"]`).forEach(b=>b.classList.add('active'));
+      document.querySelectorAll(`.string-group-btn:not([data-strings="${sv}"])`).forEach(b=>b.classList.remove('active'));
+      const nums = sv.split(',').map(Number);
+      state.stringGroup = [6-nums[0], 6-nums[1], 6-nums[2]];
+      renderTriads();
+    });
+  });
+  document.querySelectorAll('.string-group-btn[data-strings="1,2,3"]').forEach(b=>b.classList.add('active'));
+}
+
+function renderRegionContainers() {
+  const regions = [['1','5'],['5','9'],['8','12'],['12','17'],['0','24']];
+  const labels  = ['1–5','5–9','8–12','12–17','Todas'];
+  const html = regions.map((r,i) =>
+    `<button class="region-btn" data-start="${r[0]}" data-end="${r[1]}">${labels[i]}</button>`
+  ).join('');
+  document.querySelectorAll('.region-container').forEach(c => { c.innerHTML = html; c.style.display='flex'; c.style.flexWrap='wrap'; c.style.gap='0.5rem'; });
+  
+  document.querySelectorAll('.region-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const s = parseInt(btn.dataset.start);
+      const e = parseInt(btn.dataset.end);
+      
+      if (s === 0 && e === 24) {
+        // Clicou em "Todas": limpa as outras e deixa apenas "Todas"
+        state.activeRegions = [{ start: 0, end: 24 }];
+      } else {
+        // Clicou em uma específica:
+        // Se "Todas" estava ativo, remove "Todas"
+        state.activeRegions = state.activeRegions.filter(r => !(r.start === 0 && r.end === 24));
+        
+        // Verifica se essa região já está ativa (toggle)
+        const idx = state.activeRegions.findIndex(r => r.start === s && r.end === e);
+        if (idx !== -1) {
+          state.activeRegions.splice(idx, 1);
+        } else {
+          state.activeRegions.push({ start: s, end: e });
+        }
+        
+        // Se esvaziou, ativa "Todas" por padrão
+        if (state.activeRegions.length === 0) {
+          state.activeRegions = [{ start: 0, end: 24 }];
+        }
+      }
+      
+      syncSelectors();
+      renderTriads();
+    });
+  });
+  
+  syncSelectors();
+}
+
+function syncSelectors() {
+  // Sincroniza conjunto de cordas
+  const sv = [6-state.stringGroup[0], 6-state.stringGroup[1], 6-state.stringGroup[2]].join(',');
+  document.querySelectorAll(`.string-group-btn[data-strings="${sv}"]`).forEach(b=>b.classList.add('active'));
+  document.querySelectorAll(`.string-group-btn:not([data-strings="${sv}"])`).forEach(b=>b.classList.remove('active'));
+  
+  // Sincroniza botões de região
+  document.querySelectorAll('.region-btn').forEach(btn => {
+    const s = parseInt(btn.dataset.start);
+    const e = parseInt(btn.dataset.end);
+    const isActive = state.activeRegions.some(r => r.start === s && r.end === e);
+    btn.classList.toggle('active', isActive);
+  });
+}
+
+// ─── Controls ─────────────────────────────────────────────────────────────────
+function initControls() {
+  document.getElementById('tonic-select').addEventListener('change', e => {
+    state.tonic = e.target.value;
+    state.selectedChord = null;
+    clearSearch();
+    renderChordButtons(); renderModalButtons();
+    selectChordIndex(0);
+  });
+  document.getElementById('scale-select').addEventListener('change', e => {
+    state.scale = e.target.value;
+    state.selectedChord = null;
+    clearSearch();
+    renderChordButtons(); renderModalButtons();
+    selectChordIndex(0);
+  });
+  document.getElementById('cifra-process-btn').addEventListener('click', () => {
+    showSongInfo('', '', null);
+    processCifraText();
+  });
+  
+  // URL loader
+  const urlBtn = document.getElementById('cifra-url-btn');
+  const urlInput = document.getElementById('cifra-url-input');
+  if (urlBtn && urlInput) {
+    urlBtn.addEventListener('click', () => loadCifraFromURL(urlInput.value.trim()));
+    urlInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); loadCifraFromURL(urlInput.value.trim()); }
+    });
+  }
+  
+  // Collapsible "paste manually"
+  const manualToggle = document.getElementById('cifra-manual-toggle');
+  const manualBody = document.getElementById('cifra-manual-body');
+  const manualArrow = document.getElementById('cifra-manual-arrow');
+  if (manualToggle && manualBody && manualArrow) {
+    manualToggle.addEventListener('click', () => {
+      const open = manualBody.classList.toggle('open');
+      manualArrow.classList.toggle('open', open);
+    });
+  }
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+function init() {
+  initModeToggle();
+  renderStringGroupContainers();
+  renderRegionContainers();
+  renderChordButtons();
+  renderModalButtons();
+  initCollapsible();
+  initExtensionButtons();
+  initControls();
+  initSearch();
+  selectChordIndex(0);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

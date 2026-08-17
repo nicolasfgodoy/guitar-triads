@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<title>Motion Playground</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #111113;
+  --surface: #1a1a1e;
+  --surface2: #222228;
+  --border: #2e2e38;
+  --border2: #3a3a48;
+  --text: #e8e8f0;
+  --muted: #777788;
+  --accent: oklch(72% 0.18 260);
+  --accent-dim: oklch(72% 0.18 260 / 0.15);
+  --accent2: oklch(72% 0.18 160);
+  --danger: oklch(68% 0.2 25);
+  --warn: oklch(80% 0.18 85);
+  --panel-w: 320px;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Space Grotesk', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+}
+
+/* ── Layout ── */
+.app {
+  display: grid;
+  grid-template-columns: var(--panel-w) 1fr;
+  grid-template-rows: 48px 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.topbar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  gap: 12px;
+}
+
+.topbar-title {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+
+.topbar-badge {
+  font-size: 10px;
+  font-weight: 600;
+  background: var(--accent-dim);
+  color: var(--accent);
+  padding: 2px 8px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.topbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Control Panel ── */
+.panel {
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.panel::-webkit-scrollbar { width: 4px; }
+.panel::-webkit-scrollbar-thumb { background: var(--border2); }
+
+.section {
+  border-bottom: 1px solid var(--border);
+  padding: 16px;
+}
+
+.section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+/* Sliders */
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.control-row:last-child { margin-bottom: 0; }
+
+.control-label {
+  width: 80px;
+  flex-shrink: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.control-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  background: var(--border2);
+  outline: none;
+  cursor: pointer;
+}
+
+.control-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.control-slider::-webkit-slider-thumb:hover { transform: scale(1.3); }
+
+.control-value {
+  width: 44px;
+  text-align: right;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--text);
+}
+
+/* Bezier canvas */
+#bezier-canvas {
+  display: block;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  cursor: crosshair;
+  width: 100%;
+  aspect-ratio: 1;
+  margin-bottom: 8px;
+}
+
+.bezier-code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  word-break: break-all;
+  margin-bottom: 8px;
+}
+
+/* Presets */
+.preset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.preset-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 7px 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.preset-btn:hover { border-color: var(--accent); background: var(--accent-dim); }
+.preset-btn.active { border-color: var(--accent); color: var(--accent); }
+
+/* Element toggles */
+.element-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.el-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px;
+  cursor: pointer;
+  text-align: center;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.el-btn:hover { border-color: var(--border2); color: var(--text); }
+.el-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+/* Play button */
+.play-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: opacity 0.15s;
+}
+
+.play-btn:hover { opacity: 0.85; }
+
+/* Copy CSS btn */
+.copy-btn {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── Stage ── */
+.stage {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+  display: grid;
+  place-items: center;
+}
+
+.stage-grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.35;
+}
+
+.stage-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  padding: 48px;
+  width: 100%;
+  max-width: 860px;
+}
+
+/* ── Demo Elements ── */
+
+/* Card */
+.demo-card {
+  width: 280px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 24px;
+  cursor: pointer;
+  display: none;
+}
+
+.demo-card.visible { display: block; }
+
+.demo-card-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.demo-card-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  letter-spacing: -0.02em;
+}
+
+.demo-card-body {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* Button */
+.demo-btn-wrap {
+  display: none;
+  gap: 12px;
+  flex-direction: column;
+  align-items: center;
+}
+
+.demo-btn-wrap.visible { display: flex; }
+
+.demo-btn {
+  padding: 12px 32px;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.demo-btn-ghost {
+  padding: 11px 32px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Modal */
+.demo-modal-wrap {
+  display: none;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.6);
+  z-index: 20;
+}
+
+.demo-modal-wrap.visible { display: flex; }
+
+.demo-modal {
+  width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  padding: 32px;
+}
+
+.demo-modal-title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  letter-spacing: -0.02em;
+}
+
+.demo-modal-body {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.demo-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.demo-modal-close {
+  padding: 9px 20px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--muted);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.demo-modal-confirm {
+  padding: 9px 20px;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* List */
+.demo-list {
+  display: none;
+  width: 300px;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.demo-list.visible { display: flex; }
+
+.demo-list-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.demo-list-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.demo-list-dot.green { background: var(--accent2); }
+.demo-list-dot.orange { background: var(--warn); }
+.demo-list-dot.red { background: var(--danger); }
+
+.demo-list-text {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.demo-list-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Tooltip */
+.demo-tooltip-wrap {
+  position: relative;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.demo-tooltip-wrap.visible { display: flex; }
+
+.tooltip-anchor {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-trigger {
+  padding: 10px 20px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+  cursor: default;
+}
+
+.tooltip-box {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: var(--bg);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.tooltip-box::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--text);
+}
+
+/* ── Indicators ── */
+.indicator-bar {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 30;
+}
+
+.indicator-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 5px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.indicator-chip span { color: var(--accent); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--text);
+  color: var(--bg);
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 13px;
+  z-index: 999;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+.toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <span class="topbar-title">Motion Playground</span>
+    <span class="topbar-badge">CSS Transitions</span>
+    <div class="topbar-right">
+      <button class="copy-btn" id="global-copy" style="width:auto;padding:6px 14px;">Copiar CSS</button>
+    </div>
+  </header>
+
+  <!-- Control Panel -->
+  <aside class="panel">
+
+    <!-- Timing -->
+    <div class="section">
+      <div class="section-label">Timing</div>
+      <div class="control-row">
+        <span class="control-label">Duração</span>
+        <input type="range" class="control-slider" id="sl-duration" min="50" max="1200" value="400" step="10" />
+        <span class="control-value" id="val-duration">400ms</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label">Delay</span>
+        <input type="range" class="control-slider" id="sl-delay" min="0" max="800" value="0" step="10" />
+        <span class="control-value" id="val-delay">0ms</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label">Stagger</span>
+        <input type="range" class="control-slider" id="sl-stagger" min="0" max="200" value="40" step="5" />
+        <span class="control-value" id="val-stagger">40ms</span>
+      </div>
+    </div>
+
+    <!-- Physics -->
+    <div class="section">
+      <div class="section-label">Física / Curva Bézier</div>
+      <canvas id="bezier-canvas" width="288" height="288"></canvas>
+      <div class="bezier-code" id="bezier-code">cubic-bezier(0.25, 0.46, 0.45, 0.94)</div>
+      <div class="preset-grid">
+        <button class="preset-btn active" data-bezier="0.25,0.46,0.45,0.94">ease-out</button>
+        <button class="preset-btn" data-bezier="0.42,0,1,1">ease-in</button>
+        <button class="preset-btn" data-bezier="0.42,0,0.58,1">ease-in-out</button>
+        <button class="preset-btn" data-bezier="0.34,1.56,0.64,1">spring</button>
+        <button class="preset-btn" data-bezier="0.68,-0.55,0.27,1.55">bounce</button>
+        <button class="preset-btn" data-bezier="0,0,1,1">linear</button>
+        <button class="preset-btn" data-bezier="0.16,1,0.3,1">expo out</button>
+        <button class="preset-btn" data-bezier="0.87,0,0.13,1">expo in-out</button>
+      </div>
+    </div>
+
+    <!-- Transform -->
+    <div class="section">
+      <div class="section-label">Propriedades</div>
+      <div class="control-row">
+        <span class="control-label">Escala</span>
+        <input type="range" class="control-slider" id="sl-scale" min="0" max="100" value="50" step="1" />
+        <span class="control-value" id="val-scale">0.9</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label">Translate Y</span>
+        <input type="range" class="control-slider" id="sl-translateY" min="0" max="80" value="24" step="1" />
+        <span class="control-value" id="val-translateY">24px</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label">Opacidade</span>
+        <input type="range" class="control-slider" id="sl-opacity" min="0" max="100" value="0" step="1" />
+        <span class="control-value" id="val-opacity">0</span>
+      </div>
+      <div class="control-row">
+        <span class="control-label">Blur</span>
+        <input type="range" class="control-slider" id="sl-blur" min="0" max="20" value="0" step="1" />
+        <span class="control-value" id="val-blur">0px</span>
+      </div>
+    </div>
+
+    <!-- Elements -->
+    <div class="section">
+      <div class="section-label">Elemento</div>
+      <div class="element-grid">
+        <button class="el-btn active" data-el="card">Card</button>
+        <button class="el-btn" data-el="button">Botão</button>
+        <button class="el-btn" data-el="list">Lista</button>
+        <button class="el-btn" data-el="modal">Modal</button>
+        <button class="el-btn" data-el="tooltip">Tooltip</button>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="section">
+      <button class="play-btn" id="play-btn">&#9654; Animar</button>
+    </div>
+
+    <!-- Export -->
+    <div class="section">
+      <div class="section-label">Exportar</div>
+      <button class="copy-btn" id="copy-css">Copiar CSS transition</button>
+      <div style="margin-top:6px;">
+        <button class="copy-btn" id="copy-tailwind">Copiar Tailwind config</button>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- Stage -->
+  <main class="stage" id="stage">
+    <div class="stage-grid-bg"></div>
+
+    <div class="stage-inner" id="stage-inner">
+
+      <!-- Card -->
+      <div class="demo-card visible" id="demo-card">
+        <div class="demo-card-tag">Componente</div>
+        <div class="demo-card-title">Animação de entrada</div>
+        <div class="demo-card-body">Ajuste os controles ao lado e clique em Animar para ver o efeito aplicado neste card em tempo real.</div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="demo-btn-wrap" id="demo-button">
+        <button class="demo-btn" id="demo-cta">Confirmar ação</button>
+        <button class="demo-btn-ghost" id="demo-ghost">Cancelar</button>
+      </div>
+
+      <!-- List -->
+      <div class="demo-list" id="demo-list">
+        <div class="demo-list-item"><div class="demo-list-dot green"></div><span class="demo-list-text">Sistema operacional</span><span class="demo-list-sub">online</span></div>
+        <div class="demo-list-item"><div class="demo-list-dot orange"></div><span class="demo-list-text">Servidor de mídia</span><span class="demo-list-sub">lento</span></div>
+        <div class="demo-list-item"><div class="demo-list-dot red"></div><span class="demo-list-text">API de pagamento</span><span class="demo-list-sub">offline</span></div>
+        <div class="demo-list-item"><div class="demo-list-dot"></div><span class="demo-list-text">Workers de fundo</span><span class="demo-list-sub">ok</span></div>
+      </div>
+
+      <!-- Tooltip -->
+      <div class="demo-tooltip-wrap" id="demo-tooltip">
+        <div class="tooltip-anchor" id="tip-anchor-1">
+          <div class="tooltip-trigger">Hover aqui</div>
+          <div class="tooltip-box" id="tip-box-1">Ação primária</div>
+        </div>
+        <div class="tooltip-anchor" id="tip-anchor-2">
+          <div class="tooltip-trigger">Ou aqui</div>
+          <div class="tooltip-box" id="tip-box-2">Ação secundária</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Modal (overlay on stage) -->
+    <div class="demo-modal-wrap" id="demo-modal">
+      <div class="demo-modal" id="demo-modal-box">
+        <div class="demo-modal-title">Confirmar operação</div>
+        <div class="demo-modal-body">Esta ação não pode ser desfeita. Todos os dados associados serão removidos permanentemente.</div>
+        <div class="demo-modal-actions">
+          <button class="demo-modal-close" id="modal-close">Cancelar</button>
+          <button class="demo-modal-confirm">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Indicator chips -->
+    <div class="indicator-bar">
+      <div class="indicator-chip">dur: <span id="chip-dur">400ms</span></div>
+      <div class="indicator-chip">ease: <span id="chip-ease">ease-out</span></div>
+      <div class="indicator-chip">delay: <span id="chip-delay">0ms</span></div>
+    </div>
+  </main>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">Copiado para área de transferência</div>
+
+<script>
+/* ── State ── */
+const state = {
+  duration: 400,
+  delay: 0,
+  stagger: 40,
+  bezier: [0.25, 0.46, 0.45, 0.94],
+  scale: 0.9,
+  translateY: 24,
+  opacity: 0,
+  blur: 0,
+  element: 'card',
+};
+
+/* ── Bezier canvas ── */
+const canvas = document.getElementById('bezier-canvas');
+const ctx = canvas.getContext('2d');
+let dragging = null;
+const cW = 288, cH = 288;
+const PAD = 36;
+const plotW = cW - PAD * 2;
+const plotH = cH - PAD * 2;
+
+function toCanvas(x, y) {
+  return [PAD + x * plotW, PAD + (1 - y) * plotH];
+}
+
+function fromCanvas(cx, cy) {
+  return [(cx - PAD) / plotW, 1 - (cy - PAD) / plotH];
+}
+
+function drawBezier() {
+  const [x1, y1, x2, y2] = state.bezier;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = cW * dpr;
+  canvas.height = cH * dpr;
+  canvas.style.width = cW + 'px';
+  canvas.style.height = cH + 'px';
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, cW, cH);
+
+  const bg = '#222228';
+  const gridCol = '#2e2e38';
+  const curveCol = '#4a9eff';
+  const handle1Col = '#a0ffa0';
+  const handle2Col = '#ffa07a';
+
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, cW, cH);
+
+  ctx.strokeStyle = gridCol;
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) {
+    const x = PAD + i * plotW / 4;
+    const y = PAD + i * plotH / 4;
+    ctx.beginPath(); ctx.moveTo(x, PAD); ctx.lineTo(x, PAD + plotH); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(PAD + plotW, y); ctx.stroke();
+  }
+
+  const [p0x, p0y] = toCanvas(0, 0);
+  const [p1x, p1y] = toCanvas(x1, y1);
+  const [p2x, p2y] = toCanvas(x2, y2);
+  const [p3x, p3y] = toCanvas(1, 1);
+
+  ctx.setLineDash([3, 4]);
+  ctx.strokeStyle = '#444';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(p0x, p0y); ctx.lineTo(p1x, p1y); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(p3x, p3y); ctx.lineTo(p2x, p2y); ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.strokeStyle = curveCol;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(p0x, p0y);
+  ctx.bezierCurveTo(p1x, p1y, p2x, p2y, p3x, p3y);
+  ctx.stroke();
+
+  [[p1x, p1y, handle1Col], [p2x, p2y, handle2Col]].forEach(([px, py, col]) => {
+    ctx.beginPath();
+    ctx.arc(px, py, 7, 0, Math.PI * 2);
+    ctx.fillStyle = col;
+    ctx.fill();
+    ctx.strokeStyle = bg;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+
+  [[p0x, p0y], [p3x, p3y]].forEach(([px, py]) => {
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff';
+    ctx.fill();
+  });
+}
+
+function getBezierHandleAt(cx, cy) {
+  const [x1, y1, x2, y2] = state.bezier;
+  const handles = [
+    { idx: [0, 1], ...(() => { const [x, y] = toCanvas(x1, y1); return { x, y }; })() },
+    { idx: [2, 3], ...(() => { const [x, y] = toCanvas(x2, y2); return { x, y }; })() },
+  ];
+  for (const h of handles) {
+    if (Math.hypot(cx - h.x, cy - h.y) < 12) return h;
+  }
+  return null;
+}
+
+canvas.addEventListener('mousedown', e => {
+  const rect = canvas.getBoundingClientRect();
+  const cx = (e.clientX - rect.left) * (canvas.width / rect.width / (window.devicePixelRatio || 1));
+  const cy = (e.clientY - rect.top) * (canvas.height / rect.height / (window.devicePixelRatio || 1));
+  dragging = getBezierHandleAt(cx, cy);
+});
+
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const rect = canvas.getBoundingClientRect();
+  const cx = (e.clientX - rect.left) * (canvas.width / rect.width / (window.devicePixelRatio || 1));
+  const cy = (e.clientY - rect.top) * (canvas.height / rect.height / (window.devicePixelRatio || 1));
+  let [nx, ny] = fromCanvas(cx, cy);
+  nx = Math.max(0, Math.min(1, nx));
+  ny = parseFloat(ny.toFixed(2));
+  if (dragging.idx[0] === 0) {
+    state.bezier[0] = parseFloat(nx.toFixed(2));
+    state.bezier[1] = ny;
+  } else {
+    state.bezier[2] = parseFloat(nx.toFixed(2));
+    state.bezier[3] = ny;
+  }
+  updateBezierUI();
+  drawBezier();
+});
+
+window.addEventListener('mouseup', () => { dragging = null; });
+
+function updateBezierUI() {
+  const [x1, y1, x2, y2] = state.bezier;
+  const code = `cubic-bezier(${x1}, ${y1}, ${x2}, ${y2})`;
+  document.getElementById('bezier-code').textContent = code;
+  document.getElementById('chip-ease').textContent = code.length > 36 ? 'custom' : code.replace('cubic-bezier', '').replace(/\s/g,'');
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+}
+
+/* ── Sliders ── */
+const sliders = [
+  { id: 'sl-duration', val: 'val-duration', key: 'duration', fmt: v => v + 'ms', parse: v => parseInt(v) },
+  { id: 'sl-delay',    val: 'val-delay',    key: 'delay',    fmt: v => v + 'ms', parse: v => parseInt(v) },
+  { id: 'sl-stagger',  val: 'val-stagger',  key: 'stagger',  fmt: v => v + 'ms', parse: v => parseInt(v) },
+  { id: 'sl-scale',    val: 'val-scale',    key: 'scale',    fmt: v => (0.5 + v * 0.01 * 0.8).toFixed(2), parse: v => parseFloat((0.5 + parseInt(v) * 0.01 * 0.8).toFixed(2)) },
+  { id: 'sl-translateY', val: 'val-translateY', key: 'translateY', fmt: v => v + 'px', parse: v => parseInt(v) },
+  { id: 'sl-opacity',  val: 'val-opacity',  key: 'opacity',  fmt: v => (v / 100).toFixed(2), parse: v => parseFloat((parseInt(v) / 100).toFixed(2)) },
+  { id: 'sl-blur',     val: 'val-blur',     key: 'blur',     fmt: v => v + 'px', parse: v => parseInt(v) },
+];
+
+sliders.forEach(({ id, val, key, fmt, parse }) => {
+  const el = document.getElementById(id);
+  const disp = document.getElementById(val);
+  el.addEventListener('input', () => {
+    state[key] = parse(el.value);
+    disp.textContent = fmt(el.value);
+    updateChips();
+  });
+});
+
+function updateChips() {
+  document.getElementById('chip-dur').textContent = state.duration + 'ms';
+  document.getElementById('chip-delay').textContent = state.delay + 'ms';
+}
+
+/* ── Presets ── */
+document.querySelectorAll('.preset-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const vals = btn.dataset.bezier.split(',').map(Number);
+    state.bezier = vals;
+    updateBezierUI();
+    btn.classList.add('active');
+    document.getElementById('bezier-code').textContent = `cubic-bezier(${vals.join(', ')})`;
+    document.getElementById('chip-ease').textContent = btn.textContent;
+    drawBezier();
+  });
+});
+
+/* ── Element selector ── */
+const elements = ['card', 'button', 'list', 'modal', 'tooltip'];
+const elementMap = {
+  card: 'demo-card',
+  button: 'demo-button',
+  list: 'demo-list',
+  modal: 'demo-modal',
+  tooltip: 'demo-tooltip',
+};
+
+document.querySelectorAll('.el-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    state.element = btn.dataset.el;
+    document.querySelectorAll('.el-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    elements.forEach(el => {
+      document.getElementById(elementMap[el]).classList.remove('visible');
+    });
+    document.getElementById(elementMap[state.element]).classList.add('visible');
+    resetElements();
+  });
+});
+
+/* ── Animation engine ── */
+function getTransition(delay = 0) {
+  const ease = `cubic-bezier(${state.bezier.join(', ')})`;
+  return `${state.duration}ms ${ease} ${delay}ms`;
+}
+
+function applyFrom(el, extra = {}) {
+  el.style.transition = 'none';
+  el.style.opacity = state.opacity;
+  el.style.transform = `translateY(${state.translateY}px) scale(${state.scale})`;
+  el.style.filter = state.blur > 0 ? `blur(${state.blur}px)` : '';
+  Object.assign(el.style, extra);
+}
+
+function applyTo(el, delay = 0) {
+  el.style.transition = `opacity ${getTransition(delay)}, transform ${getTransition(delay)}, filter ${getTransition(delay)}`;
+  requestAnimationFrame(() => {
+    el.style.opacity = '1';
+    el.style.transform = 'translateY(0) scale(1)';
+    el.style.filter = 'none';
+  });
+}
+
+function resetElements() {
+  ['demo-card', 'demo-cta', 'demo-ghost', ...document.querySelectorAll('.demo-list-item')].forEach(el => {
+    if (typeof el === 'string') el = document.getElementById(el);
+    if (!el) return;
+    el.style.transition = '';
+    el.style.opacity = '';
+    el.style.transform = '';
+    el.style.filter = '';
+  });
+  const modal = document.getElementById('demo-modal-box');
+  if (modal) { modal.style.transition = ''; modal.style.opacity = ''; modal.style.transform = ''; modal.style.filter = ''; }
+  const tips = document.querySelectorAll('.tooltip-box');
+  tips.forEach(t => { t.style.transition = ''; t.style.opacity = ''; });
+}
+
+document.getElementById('play-btn').addEventListener('click', () => {
+  const el = state.element;
+
+  if (el === 'card') {
+    const card = document.getElementById('demo-card');
+    applyFrom(card);
+    requestAnimationFrame(() => requestAnimationFrame(() => applyTo(card)));
+  }
+
+  if (el === 'button') {
+    const btns = [document.getElementById('demo-cta'), document.getElementById('demo-ghost')];
+    btns.forEach(b => applyFrom(b));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      applyTo(btns[0], 0);
+      applyTo(btns[1], state.stagger);
+    }));
+  }
+
+  if (el === 'list') {
+    const items = document.querySelectorAll('.demo-list-item');
+    items.forEach(item => applyFrom(item));
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      items.forEach((item, i) => applyTo(item, i * state.stagger));
+    }));
+  }
+
+  if (el === 'modal') {
+    const box = document.getElementById('demo-modal-box');
+    applyFrom(box);
+    requestAnimationFrame(() => requestAnimationFrame(() => applyTo(box)));
+  }
+
+  if (el === 'tooltip') {
+    const tips = document.querySelectorAll('.tooltip-box');
+    tips.forEach(t => {
+      t.style.transition = 'none';
+      t.style.opacity = '0';
+    });
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      tips.forEach((t, i) => {
+        t.style.transition = `opacity ${getTransition(i * state.stagger)}`;
+        t.style.opacity = '1';
+      });
+    }));
+  }
+});
+
+/* ── Modal close ── */
+document.getElementById('modal-close').addEventListener('click', () => {
+  document.getElementById('demo-modal').classList.remove('visible');
+  document.querySelectorAll('.el-btn').forEach(b => {
+    if (b.dataset.el === 'modal') b.classList.remove('active');
+  });
+  document.getElementById(elementMap['card']).classList.add('visible');
+  state.element = 'card';
+  document.querySelector('[data-el="card"]').classList.add('active');
+});
+
+/* ── Copy ── */
+function cssOutput() {
+  const ease = `cubic-bezier(${state.bezier.join(', ')})`;
+  return [
+    `/* Motion Playground export */`,
+    `.element {`,
+    `  transition: opacity ${state.duration}ms ${ease} ${state.delay}ms,`,
+    `              transform ${state.duration}ms ${ease} ${state.delay}ms;`,
+    `}`,
+    `.element.hidden {`,
+    `  opacity: ${state.opacity};`,
+    `  transform: translateY(${state.translateY}px) scale(${state.scale});${state.blur > 0 ? `\n  filter: blur(${state.blur}px);` : ''}`,
+    `}`,
+  ].join('\n');
+}
+
+function tailwindOutput() {
+  const ease = `cubic-bezier(${state.bezier.join(', ')})`;
+  return [
+    `// tailwind.config.js`,
+    `module.exports = {`,
+    `  theme: {`,
+    `    extend: {`,
+    `      transitionTimingFunction: {`,
+    `        'motion': '${ease}',`,
+    `      },`,
+    `      transitionDuration: {`,
+    `        '${state.duration}': '${state.duration}ms',`,
+    `      },`,
+    `    },`,
+    `  },`,
+    `}`,
+    ``,
+    `// Usage: class="transition-all duration-[${state.duration}ms] ease-[${ease}] delay-[${state.delay}ms]"`,
+  ].join('\n');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast('Copiado para área de transferência');
+  } catch (e) {
+    showToast('Erro ao copiar');
+  }
+}
+
+document.getElementById('copy-css').addEventListener('click', () => copyText(cssOutput()));
+document.getElementById('copy-tailwind').addEventListener('click', () => copyText(tailwindOutput()));
+document.getElementById('global-copy').addEventListener('click', () => copyText(cssOutput()));
+
+/* ── Init ── */
+drawBezier();
+updateChips();
+</script>
+
+</body>
+</html>

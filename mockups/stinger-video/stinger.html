@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=1920, height=1080" />
+  <title>Stinger Video</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    #stage {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      background: #1a1a1a;
+      overflow: hidden;
+    }
+
+    .scene {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+    }
+
+    .scene.active {
+      opacity: 1;
+    }
+
+    .scene-text {
+      font-size: 96px;
+      font-weight: 700;
+      color: #f0f0f0;
+      text-align: center;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      max-width: 1400px;
+      text-transform: lowercase;
+    }
+
+    #stinger {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+      transform: translateX(-100%);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    #status-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.85);
+      color: #f0f0f0;
+      font-family: 'Space Grotesk', monospace;
+      font-size: 18px;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 100;
+    }
+
+    #rec-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #666;
+      flex-shrink: 0;
+      transition: background 0.3s;
+    }
+
+    #rec-dot.recording {
+      background: #e03030;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    #btn-record {
+      margin-left: auto;
+      background: #f0f0f0;
+      color: #1a1a1a;
+      border: none;
+      padding: 10px 28px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+    }
+
+    #btn-record:hover { background: #ffffff; }
+    #btn-record:disabled { opacity: 0.4; cursor: default; }
+  </style>
+</head>
+<body>
+
+<div id="stage">
+  <div class="scene active" id="scene-0">
+    <span class="scene-text">e aí henrique, beleza?</span>
+  </div>
+  <div class="scene" id="scene-1">
+    <span class="scene-text">fiz isso aqui 100% com IA</span>
+  </div>
+  <div class="scene" id="scene-2">
+    <span class="scene-text">foda-se o after effects</span>
+  </div>
+  <div id="stinger"></div>
+</div>
+
+<div id="status-bar">
+  <div id="rec-dot"></div>
+  <span id="status-text">Pronto. Clique em Gravar para iniciar.</span>
+  <button id="btn-record">⏺ Gravar MP4</button>
+</div>
+
+<script>
+  const scenes = [
+    document.getElementById('scene-0'),
+    document.getElementById('scene-1'),
+    document.getElementById('scene-2'),
+  ];
+  const stinger = document.getElementById('stinger');
+  const btnRecord = document.getElementById('btn-record');
+  const recDot = document.getElementById('rec-dot');
+  const statusText = document.getElementById('status-text');
+
+  let currentScene = 0;
+
+  function easeInOut(t) {
+    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+  }
+
+  function animateStinger(sweepIn, duration, onMid) {
+    return new Promise(resolve => {
+      const start = performance.now();
+      function frame(now) {
+        const t = Math.min((now - start) / duration, 1);
+        const e = easeInOut(t);
+        if (sweepIn) {
+          stinger.style.transform = `translateX(${(1 - e) * -100}%)`;
+        } else {
+          stinger.style.transform = `translateX(${e * 100}%)`;
+        }
+        if (t < 1) {
+          requestAnimationFrame(frame);
+        } else {
+          if (onMid) onMid();
+          resolve();
+        }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  async function stingerTransition(nextIndex) {
+    await animateStinger(true, 350, null);
+    scenes[currentScene].classList.remove('active');
+    if (nextIndex < scenes.length) {
+      scenes[nextIndex].classList.add('active');
+    }
+    currentScene = nextIndex;
+    await new Promise(r => setTimeout(r, 60));
+    await animateStinger(false, 350, null);
+  }
+
+  async function runSequence() {
+    const holdTimes = [2200, 2200, 2200];
+
+    for (let i = 0; i < scenes.length; i++) {
+      if (i === 0) {
+        scenes[0].classList.add('active');
+        await new Promise(r => setTimeout(r, holdTimes[0]));
+      } else {
+        await stingerTransition(i);
+        await new Promise(r => setTimeout(r, holdTimes[i]));
+      }
+    }
+
+    await animateStinger(true, 350, null);
+  }
+
+  btnRecord.addEventListener('click', async () => {
+    btnRecord.disabled = true;
+    recDot.classList.add('recording');
+    statusText.textContent = 'Gravando...';
+
+    scenes.forEach((s, i) => {
+      s.classList.remove('active');
+    });
+    currentScene = 0;
+    stinger.style.transform = 'translateX(-100%)';
+    scenes[0].classList.add('active');
+
+    await new Promise(r => setTimeout(r, 200));
+
+    const stage = document.getElementById('stage');
+    let stream;
+    try {
+      stream = stage.captureStream(60);
+    } catch(e) {
+      statusText.textContent = 'Erro: navegador não suporta captureStream. Use Chrome.';
+      btnRecord.disabled = false;
+      recDot.classList.remove('recording');
+      return;
+    }
+
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+      ? 'video/webm;codecs=vp9'
+      : 'video/webm';
+
+    const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 12_000_000 });
+    const chunks = [];
+    recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+    recorder.onstop = () => {
+      const blob = new Blob(chunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'stinger-henrique.webm';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      statusText.textContent = 'Download concluído! Arquivo: stinger-henrique.webm';
+      recDot.classList.remove('recording');
+      btnRecord.disabled = false;
+    };
+
+    recorder.start();
+    await runSequence();
+    await new Promise(r => setTimeout(r, 300));
+    recorder.stop();
+  });
+</script>
+
+</body>
+</html>

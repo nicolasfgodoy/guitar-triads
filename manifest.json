@@ -1,0 +1,29 @@
+{
+  "generated": "2024-05-18T10:00:00.000Z",
+  "sections": [
+    {
+      "id": "mockups",
+      "label": "Mockups",
+      "groups": [
+        {
+          "slug": "guitar-triads",
+          "files": [
+            { "label": "index.html", "path": "mockups/guitar-triads/index.html" }
+          ]
+        },
+        {
+          "slug": "motion-playground",
+          "files": [
+            { "label": "motion-playground.html", "path": "mockups/motion-playground/motion-playground.html" }
+          ]
+        },
+        {
+          "slug": "stinger-video",
+          "files": [
+            { "label": "stinger.html", "path": "mockups/stinger-video/stinger.html" }
+          ]
+        }
+      ]
+    }
+  ]
+}
