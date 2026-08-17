@@ -255,21 +255,35 @@
         </div>
 
         <div class="control-group">
-          <label for="cifra-textarea">Cole a cifra (Cifra Club, etc.)</label>
-          <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.5rem;">Copie a cifra do seu site favorito e cole abaixo para interagir.</div>
-          <textarea id="cifra-textarea" placeholder="Cole aqui a cifra com acordes e letra...
+          <label for="cifra-url-input">Link da cifra (Cifra Club, etc.)</label>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            <input type="url" id="cifra-url-input" style="flex:1;min-width:180px;" placeholder="https://www.cifraclub.com.br/artista/musica/">
+            <button class="process-btn" id="cifra-url-btn" style="white-space:nowrap;flex-shrink:0;">📥 Carregar</button>
+          </div>
+          <div id="cifra-loader" style="display:none;font-size:0.8rem;color:var(--accent);font-family:'IBM Plex Mono',monospace;margin-top:0.25rem;">⟳ Carregando cifra…</div>
+          <div id="cifra-error" style="display:none;font-size:0.8rem;color:var(--root-note);font-family:'IBM Plex Mono',monospace;margin-top:0.25rem;"></div>
+        </div>
+
+        <div class="collapsible-header" id="cifra-manual-toggle" style="padding:0.35rem 0;">
+          <span class="toggle-arrow" id="cifra-manual-arrow">▶</span>
+          <span>Ou colar texto manualmente</span>
+        </div>
+        <div class="collapsible-body" id="cifra-manual-body">
+          <div class="control-group" style="margin-top:0.5rem;gap:0.5rem;">
+            <textarea id="cifra-textarea" placeholder="Cole aqui a cifra com acordes e letra...
 
 Tom: G
 
 G        Em       C        D
 Tudo que a gente sonhou
 Am7      D7       G
-Agora se realizou" style="min-height: 250px;"></textarea>
-          <button class="process-btn" id="cifra-process-btn" style="margin-top:0.5rem;width:100%;">Processar Cifra</button>
+Agora se realizou"></textarea>
+            <button class="process-btn" id="cifra-process-btn">Processar Texto</button>
+          </div>
         </div>
 
         <div class="cifra-detected-chords">
-          <label>Acordes Identificados (Clique para ver voicings, duplo clique para ouvir)</label>
+          <label>Acordes Identificados (Dê duplo clique para ouvir)</label>
           <div class="chord-buttons" id="cifra-detected-buttons">
             <div style="font-size:0.85rem;color:var(--text-muted)">Nenhum acorde processado ainda</div>
           </div>
@@ -1432,6 +1446,116 @@ function renderCifraActiveChord() {
   else { state.selectedChord = null; renderTriads(); }
 }
 
+// ─── URL Fetch with CORS proxy fallback ──────────────────────────────────────
+async function fetchCifraFromURL(url) {
+  const proxies = [
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`
+  ];
+  
+  for (const proxy of proxies) {
+    try {
+      const targetUrl = proxy(url);
+      const res = await fetch(targetUrl);
+      if (!res.ok) continue;
+      const text = await res.text();
+      // Se for allorigins, retorna como JSON envelopado
+      if (text.trim().startsWith('{')) {
+        try {
+          const json = JSON.parse(text);
+          if (json.contents) return json.contents;
+        } catch {}
+      }
+      if (text && text.length > 200) {
+        return text;
+      }
+    } catch (e) {
+      console.warn('Proxy failed:', e.message);
+    }
+  }
+  throw new Error('Não foi possível carregar a cifra de forma automática. Copie o texto e use a opção manual abaixo.');
+}
+
+function extractCifraFromHTML(html) {
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  
+  // Tenta achar a tag pre do Cifra Club
+  let pre = doc.querySelector('pre');
+  if (!pre) pre = doc.querySelector('.cifra-mono') || doc.querySelector('.cifra') || doc.querySelector('[class*="cifra"]');
+  if (!pre) throw new Error('Conteúdo da cifra não encontrado na página.');
+  
+  let text = pre.textContent || pre.innerText;
+  let title = '', artist = '', key = null;
+  
+  const titleEl = doc.querySelector('h1') || doc.querySelector('.t1') || doc.querySelector('[class*="title"]');
+  if (titleEl) title = titleEl.textContent.replace(/cifra|tablatura/gi, '').trim();
+  
+  const artistEl = doc.querySelector('h2') || doc.querySelector('.t3') || doc.querySelector('[class*="artist"]');
+  if (artistEl) artist = artistEl.textContent.trim();
+  
+  const keyEl = doc.getElementById('cifra_tom') || doc.querySelector('[id*="tom"]') || doc.querySelector('[class*="tom"]');
+  if (keyEl) key = keyEl.textContent.replace(/Tom:/i, '').trim();
+  
+  if (!key) {
+    const km = text.match(/(?:Tom|Key):\s*([A-G][#b]?)/i);
+    if (km) key = km[1];
+  }
+  
+  return { title, artist, key, text };
+}
+
+function showCifraLoader(show) {
+  const loader = document.getElementById('cifra-loader');
+  const errorEl = document.getElementById('cifra-error');
+  if (loader) loader.style.display = show ? 'block' : 'none';
+  if (errorEl) errorEl.style.display = 'none';
+}
+
+function showCifraError(msg) {
+  const errorEl = document.getElementById('cifra-error');
+  if (errorEl) {
+    errorEl.textContent = msg || 'Erro ao carregar a cifra.';
+    errorEl.style.display = 'block';
+  }
+}
+
+function showSongInfo(title, artist, key) {
+  const info = document.getElementById('cifra-song-info');
+  const titleEl = document.getElementById('cifra-song-title');
+  const artistEl = document.getElementById('cifra-song-artist');
+  const keyEl = document.getElementById('cifra-song-key');
+  
+  if (info) info.style.display = (title || artist || key) ? 'block' : 'none';
+  if (titleEl) titleEl.textContent = title || '';
+  if (artistEl) artistEl.textContent = artist || '';
+  if (keyEl) keyEl.textContent = key ? `Tom: ${key}` : '';
+}
+
+async function loadCifraFromURL(url) {
+  if (!url || !url.startsWith('http')) {
+    showCifraError('Insira um link válido.');
+    return;
+  }
+  
+  showCifraLoader(true);
+  showSongInfo('', '', null);
+  
+  try {
+    const html = await fetchCifraFromURL(url);
+    const { title, artist, key, text } = extractCifraFromHTML(html);
+    
+    showCifraLoader(false);
+    showSongInfo(title, artist, key);
+    
+    document.getElementById('cifra-textarea').value = text;
+    processCifraText();
+  } catch (e) {
+    showCifraLoader(false);
+    showCifraError(e.message || 'Erro ao carregar a cifra.');
+  }
+}
+
 // ─── Shared selectors ─────────────────────────────────────────────────────────
 function renderStringGroupContainers() {
   const html = ['1,2,3','2,3,4','3,4,5','4,5,6'].map(s =>
@@ -1526,8 +1650,19 @@ function initControls() {
     selectChordIndex(0);
   });
   document.getElementById('cifra-process-btn').addEventListener('click', () => {
+    showSongInfo('', '', null);
     processCifraText();
   });
+  
+  // URL loader
+  const urlBtn = document.getElementById('cifra-url-btn');
+  const urlInput = document.getElementById('cifra-url-input');
+  if (urlBtn && urlInput) {
+    urlBtn.addEventListener('click', () => loadCifraFromURL(urlInput.value.trim()));
+    urlInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); loadCifraFromURL(urlInput.value.trim()); }
+    });
+  }
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
