@@ -1449,6 +1449,7 @@ function renderCifraActiveChord() {
 // ─── URL Fetch with CORS proxy fallback ──────────────────────────────────────
 async function fetchCifraFromURL(url) {
   const proxies = [
+    u => `/.netlify/functions/get-cifra?url=${encodeURIComponent(u)}`,
     u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
     u => `https://api.allorigins.win/get?url=${encodeURIComponent(u)}`
   ];
