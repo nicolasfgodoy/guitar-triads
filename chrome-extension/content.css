@@ -349,6 +349,160 @@
   background-color: var(--ot-surface-raised);
 }
 
+/* Painel de Voicings Selecionados para a Música */
+.ot-selected-panel {
+  background-color: var(--ot-surface) !important;
+  border: 1px dashed var(--ot-accent) !important;
+  border-radius: 8px !important;
+  padding: 15px !important;
+  margin: 20px 0 !important;
+  box-sizing: border-box !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  color: var(--ot-text) !important;
+}
+
+.ot-selected-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--ot-border);
+  padding-bottom: 8px;
+}
+
+.ot-selected-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--ot-accent);
+  font-weight: bold;
+}
+
+.ot-clear-all-btn {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  background: var(--ot-surface-raised);
+  border: 1px solid var(--ot-border);
+  border-radius: 4px;
+  color: var(--ot-text-muted);
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.ot-clear-all-btn:hover {
+  color: var(--ot-root-note);
+  border-color: var(--ot-root-note);
+}
+
+.ot-selected-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+
+.ot-selected-card {
+  background: var(--ot-bg);
+  border: 1px solid var(--ot-accent);
+  border-radius: 6px;
+  padding: 10px;
+  width: 170px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ot-selected-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.ot-selected-chord-title {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--ot-accent);
+  font-weight: bold;
+}
+
+.ot-selected-chord-subtitle {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--ot-text-muted);
+  line-height: 1.2;
+}
+
+.ot-selected-listen-btn {
+  padding: 2px 5px;
+  font-size: 0.65rem;
+  background: var(--ot-surface-raised);
+  border: 1px solid var(--ot-border);
+  border-radius: 4px;
+  color: var(--ot-text);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ot-selected-listen-btn:hover {
+  color: var(--ot-accent);
+  border-color: var(--ot-accent);
+}
+
+.ot-selected-fretboard {
+  display: flex;
+  justify-content: center;
+  background: var(--ot-surface-raised);
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.ot-selected-remove-btn {
+  width: 100%;
+  padding: 4px;
+  font-size: 0.72rem;
+  background: transparent;
+  border: 1px solid var(--ot-border);
+  border-radius: 4px;
+  color: var(--ot-text-muted);
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.15s;
+}
+
+.ot-selected-remove-btn:hover {
+  color: var(--ot-root-note);
+  border-color: var(--ot-root-note);
+  background-color: rgba(201, 74, 58, 0.1);
+}
+
+/* Botão de Fixar na Sidebar */
+.ot-fix-btn {
+  background-color: var(--ot-surface-raised);
+  border: 1px solid var(--ot-border);
+  color: var(--ot-text-muted);
+  transition: all 0.15s;
+}
+
+.ot-fix-btn:hover {
+  border-color: var(--ot-accent);
+  color: var(--ot-accent);
+}
+
+.ot-fix-btn.selected {
+  background-color: var(--ot-accent) !important;
+  color: var(--ot-bg) !important;
+  border-color: var(--ot-accent) !important;
+}
+
+/* Botões do Tooltip e botão de Fixar ativado na Tooltip */
+.ot-btn-fix.selected {
+  background-color: var(--ot-accent) !important;
+  color: var(--ot-bg) !important;
+  border-color: var(--ot-accent) !important;
+}
+
 /* Ajusta margens e paddings no Cifra Club se a sidebar estiver aberta */
 body {
   padding-left: 360px !important;

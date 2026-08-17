@@ -13,7 +13,8 @@ let extState = {
   voicing: 'R35',
   stringGroup: [5, 4, 3], // 1,2,3 cordas (em termos de array interno)
   activeRegions: [{ start: 0, end: 24 }],
-  currentPositions: []
+  currentPositions: [],
+  selectedVoicings: []
 };
 
 // ─── Constantes e Teoria (Importadas do app original) ──────────────────────────
@@ -534,14 +535,29 @@ function renderSidebarTriads() {
     const strNames = pos.strings.map(s => STRING_LABELS[s]).join('-');
     const subtitle = `${pos.inversionName} · ${strNames}`;
     
+    // Verifica se este shape específico já está fixado/selecionado na música
+    const isSelected = extState.selectedVoicings.some(v => 
+      v.chordName === extState.selectedChord.fullName && 
+      v.inversionName === pos.inversionName && 
+      v.frets.join(',') === pos.frets.join(',')
+    );
+
+    const fixBtnText = isSelected ? '✓ Selecionado' : '＋ Fixar na Música';
+    const fixBtnClass = isSelected ? 'ot-fix-btn selected' : 'ot-fix-btn';
+    
     return `
-      <div class="ot-voicing-card" data-idx="${idx}">
-        <div class="ot-card-header">
-          <div>
-            <div class="ot-card-title">${extState.selectedChord.fullName}</div>
-            <div class="ot-card-subtitle">${subtitle}</div>
+      <div class="ot-voicing-card" data-idx="${idx}" style="${isSelected ? 'border-color:var(--ot-accent);' : ''}">
+        <div class="ot-card-header" style="display:flex; flex-direction:column; gap:6px; width:100%;">
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+            <div>
+              <div class="ot-card-title">${extState.selectedChord.fullName}</div>
+              <div class="ot-card-subtitle">${subtitle}</div>
+            </div>
+            <button class="ot-listen-btn">🔊 Ouvir</button>
           </div>
-          <button class="ot-listen-btn">🔊 Ouvir</button>
+          <button class="${fixBtnClass}" style="width:100%; padding:4px; font-size:0.75rem; border-radius:4px; font-weight:bold; cursor:pointer; margin-top:2px;">
+            ${fixBtnText}
+          </button>
         </div>
         <div class="ot-fretboard">${renderFretboardSVG(pos)}</div>
       </div>
@@ -549,18 +565,143 @@ function renderSidebarTriads() {
   }).join('');
 
   container.querySelectorAll('.ot-voicing-card').forEach(card => {
+    const idx = +card.dataset.idx;
+    const pos = extState.currentPositions[idx];
+
     // Escuta clique no botão Ouvir
-    const btn = card.querySelector('.ot-listen-btn');
-    btn.addEventListener('click', (e) => {
+    card.querySelector('.ot-listen-btn').addEventListener('click', (e) => {
       e.stopPropagation();
-      const pos = extState.currentPositions[+card.dataset.idx];
       if (pos) playChordVoicing(pos.notes);
+    });
+
+    // Escuta clique no botão de Fixar
+    card.querySelector('.ot-fix-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleSelectVoicing(pos);
     });
 
     // Escuta clique geral no card para ouvir
     card.addEventListener('click', () => {
-      const pos = extState.currentPositions[+card.dataset.idx];
       if (pos) playChordVoicing(pos.notes);
+    });
+  });
+}
+
+function toggleSelectVoicing(pos) {
+  if (!pos) return;
+
+  const chordName = extState.selectedChord.fullName;
+  const existingIdx = extState.selectedVoicings.findIndex(v => 
+    v.chordName === chordName && 
+    v.inversionName === pos.inversionName && 
+    v.frets.join(',') === pos.frets.join(',')
+  );
+
+  if (existingIdx !== -1) {
+    extState.selectedVoicings.splice(existingIdx, 1);
+  } else {
+    const strNames = pos.strings.map(s => STRING_LABELS[s]).join('-');
+    const subtitle = `${pos.inversionName} · ${strNames}`;
+    extState.selectedVoicings.push({
+      ...pos,
+      chordName: chordName,
+      subtitle: subtitle
+    });
+  }
+
+  // Atualiza sidebar e painel principal na página do Cifra Club
+  renderSidebarTriads();
+  renderSelectedVoicingsOnPage();
+}
+
+function removeSelectedVoicing(idx) {
+  extState.selectedVoicings.splice(idx, 1);
+  renderSidebarTriads();
+  renderSelectedVoicingsOnPage();
+}
+
+function clearAllSelectedVoicings() {
+  extState.selectedVoicings = [];
+  renderSidebarTriads();
+  renderSelectedVoicingsOnPage();
+}
+
+// ─── Renderiza o Painel de Voicings Selecionados no Cabeçalho do Cifra Club ────
+function renderSelectedVoicingsOnPage() {
+  let panel = document.getElementById('ot-selected-voicings-panel');
+  
+  // Se não houver nenhum voicing selecionado, removemos/escondemos o painel
+  if (extState.selectedVoicings.length === 0) {
+    if (panel) panel.style.display = 'none';
+    return;
+  }
+
+  // Se o painel não existir na página, vamos criá-lo
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'ot-selected-voicings-panel';
+    panel.className = 'ot-selected-panel';
+    
+    // Inserimos logo abaixo do container de acordes original do Cifra Club
+    const chordsContainer = document.querySelector('#chords-list, .cifra-chords-list, .cifra-instrument-guitar');
+    if (chordsContainer) {
+      chordsContainer.parentNode.insertBefore(panel, chordsContainer.nextSibling);
+    } else {
+      // Fallback: coloca no topo da div de cifra
+      const cifraContainer = document.querySelector('.cifra_container, pre');
+      if (cifraContainer) {
+        cifraContainer.parentNode.insertBefore(panel, cifraContainer);
+      }
+    }
+  }
+
+  panel.style.display = 'block';
+
+  const header = `
+    <div class="ot-selected-header">
+      <h4>📋 Voicings de Tríades Selecionados para a Música</h4>
+      <button class="ot-clear-all-btn" id="ot-clear-selected-chords">Limpar Todos</button>
+    </div>
+  `;
+
+  const grid = `
+    <div class="ot-selected-grid">
+      ${extState.selectedVoicings.map((pos, idx) => {
+        return `
+          <div class="ot-selected-card">
+            <div class="ot-selected-card-header">
+              <div>
+                <strong class="ot-selected-chord-title">${pos.chordName}</strong>
+                <span class="ot-selected-chord-subtitle">${pos.subtitle}</span>
+              </div>
+              <button class="ot-selected-listen-btn" data-idx="${idx}">🔊 Ouvir</button>
+            </div>
+            <div class="ot-selected-fretboard">${renderFretboardSVG(pos)}</div>
+            <button class="ot-selected-remove-btn" data-idx="${idx}">✕ Remover</button>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+
+  panel.innerHTML = header + grid;
+
+  // Event Listener para Limpar Todos
+  document.getElementById('ot-clear-selected-chords').addEventListener('click', clearAllSelectedVoicings);
+
+  // Event Listeners individuais de Ouvir e Remover
+  panel.querySelectorAll('.ot-selected-listen-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const pos = extState.selectedVoicings[+btn.dataset.idx];
+      if (pos) playChordVoicing(pos.notes);
+    });
+  });
+
+  panel.querySelectorAll('.ot-selected-remove-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeSelectedVoicing(+btn.dataset.idx);
     });
   });
 }
@@ -629,6 +770,17 @@ function showTooltip(target, chordName) {
 
   const firstPos = positions[0];
 
+  // Verifica se este shape específico já está fixado/selecionado na música
+  const isSelected = extState.selectedVoicings.some(v => 
+    v.chordName === chordName && 
+    v.inversionName === firstPos.inversionName && 
+    v.frets.join(',') === firstPos.frets.join(',')
+  );
+
+  const fixBtnText = isSelected ? '✓' : '＋';
+  const fixBtnTitle = isSelected ? 'Remover da música' : 'Fixar na música';
+  const fixBtnClass = isSelected ? 'ot-tooltip-btn ot-btn-fix selected' : 'ot-tooltip-btn ot-btn-fix';
+
   // Cria elemento do tooltip
   const tooltip = document.createElement('div');
   tooltip.className = 'ot-tooltip';
@@ -645,8 +797,9 @@ function showTooltip(target, chordName) {
       ${renderFretboardSVG(firstPos)}
     </div>
     <div class="ot-tooltip-footer">
-      <button class="ot-tooltip-btn ot-btn-listen">🔊 Ouvir</button>
-      <button class="ot-tooltip-btn ot-btn-variar">🔍 Variar</button>
+      <button class="ot-tooltip-btn ot-btn-listen" title="Ouvir tríade">🔊</button>
+      <button class="${fixBtnClass}" title="${fixBtnTitle}">${fixBtnText}</button>
+      <button class="ot-tooltip-btn ot-btn-variar" title="Ver outras variações">🔍 Variar</button>
     </div>
   `;
 
@@ -665,6 +818,19 @@ function showTooltip(target, chordName) {
   tooltip.querySelector('.ot-btn-listen').addEventListener('click', (e) => {
     e.stopPropagation();
     playChordVoicing(firstPos.notes);
+  });
+
+  tooltip.querySelector('.ot-btn-fix').addEventListener('click', (e) => {
+    e.stopPropagation();
+    
+    // Simula a seleção daquele acorde
+    const oldSelected = extState.selectedChord;
+    extState.selectedChord = parsed;
+    toggleSelectVoicing(firstPos);
+    extState.selectedChord = oldSelected;
+    
+    // Atualiza a tooltip para refletir o novo estado do botão
+    showTooltip(target, chordName);
   });
 
   tooltip.querySelector('.ot-btn-variar').addEventListener('click', (e) => {
