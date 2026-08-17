@@ -1,0 +1,248 @@
+/* ESTILOS DA SIDEBAR FLUTUANTE DE TRÍADES */
+:root {
+  --ot-bg: #0f0d0b;
+  --ot-surface: #1c1812;
+  --ot-surface-raised: #252019;
+  --ot-border: #3a322a;
+  --ot-text: #e8e2da;
+  --ot-text-muted: #8a8078;
+  --ot-accent: #d4894a;
+  --ot-accent-hover: #e89a5a;
+  --ot-root-note: #c94a3a;
+}
+
+/* Sidebar Container */
+.ot-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 360px;
+  height: 100vh;
+  background-color: var(--ot-bg) !important;
+  color: var(--ot-text) !important;
+  border-right: 1px solid var(--ot-border);
+  box-shadow: 5px 0 15px rgba(0, 0, 0, 0.5);
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 15px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+  transition: transform 0.3s ease;
+  overflow: hidden;
+}
+
+.ot-sidebar.ot-hidden {
+  transform: translateX(-100%);
+  pointer-events: none;
+}
+
+/* Header */
+.ot-sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--ot-border);
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+
+.ot-sidebar-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: bold;
+  color: var(--ot-accent);
+}
+
+.ot-close-btn {
+  font-size: 1.1rem;
+  color: var(--ot-text-muted);
+  cursor: pointer;
+  padding: 5px;
+  transition: color 0.2s;
+}
+
+.ot-close-btn:hover {
+  color: #fff;
+}
+
+/* Seções e Inputs */
+.ot-section {
+  margin-bottom: 15px;
+}
+
+.ot-section label {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ot-text-muted);
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.ot-config-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  background: var(--ot-surface);
+  border: 1px solid var(--ot-border);
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.ot-config-grid label {
+  margin-bottom: 4px;
+}
+
+.ot-sidebar select {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 0.8rem;
+  background-color: var(--ot-surface-raised);
+  border: 1px solid var(--ot-border);
+  border-radius: 4px;
+  color: var(--ot-text);
+  outline: none;
+  cursor: pointer;
+}
+
+.ot-sidebar select:hover:not(:disabled) {
+  border-color: var(--ot-accent);
+}
+
+.ot-sidebar select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Acordes Detectados (Chips) */
+.ot-chord-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--ot-surface);
+  border: 1px solid var(--ot-border);
+  border-radius: 6px;
+}
+
+.ot-chord-chip {
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  font-family: monospace;
+  background: var(--ot-surface-raised);
+  border: 1px solid var(--ot-border);
+  border-radius: 4px;
+  color: var(--ot-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ot-chord-chip:hover {
+  border-color: var(--ot-accent);
+  color: var(--ot-accent);
+}
+
+.ot-chord-chip.selected {
+  background: var(--ot-accent);
+  color: var(--ot-bg);
+  border-color: var(--ot-accent);
+  font-weight: bold;
+}
+
+/* Resultados (Triads Grid) */
+.ot-results-grid {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-right: 4px;
+}
+
+.ot-voicing-card {
+  background: var(--ot-surface);
+  border: 1px solid var(--ot-border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ot-voicing-card:hover {
+  border-color: var(--ot-accent);
+}
+
+.ot-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ot-card-title {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--ot-accent);
+}
+
+.ot-card-subtitle {
+  font-size: 0.72rem;
+  color: var(--ot-text-muted);
+}
+
+.ot-listen-btn {
+  padding: 3px 6px;
+  font-size: 0.7rem;
+  background: var(--ot-surface-raised);
+  border: 1px solid var(--ot-border);
+  border-radius: 4px;
+  color: var(--ot-text);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.ot-listen-btn:hover {
+  color: var(--ot-accent);
+  border-color: var(--ot-accent);
+}
+
+.ot-fretboard {
+  display: flex;
+  justify-content: center;
+  background: var(--ot-surface-raised);
+  border-radius: 4px;
+  padding: 5px;
+}
+
+/* Destaque nos acordes originais do site do Cifra Club */
+.ot-highlighted-chord {
+  color: var(--ot-accent) !important;
+  font-weight: bold !important;
+  border-bottom: 1px dashed var(--ot-accent);
+  padding: 1px 2px;
+  border-radius: 2px;
+  transition: background-color 0.2s;
+}
+
+.ot-highlighted-chord:hover {
+  background-color: rgba(212, 137, 74, 0.15) !important;
+}
+
+/* Ajusta margens e paddings no Cifra Club se a sidebar estiver aberta */
+body {
+  padding-left: 360px !important;
+}
+@media (max-width: 900px) {
+  body {
+    padding-left: 0 !important;
+  }
+  .ot-sidebar {
+    width: 100vw;
+  }
+}
